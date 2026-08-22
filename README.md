@@ -1,54 +1,159 @@
-# 🚀 DevPilot AI
+<div align="center">
 
-**Your Personal Software Engineer Dashboard**
+```
+  ██████╗ ███████╗██╗   ██╗██████╗ ██╗██╗      ██████╗ ████████╗     █████╗ ██╗
+  ██╔══██╗██╔════╝██║   ██║██╔══██╗██║██║     ██╔═══██╗╚══██╔══╝    ██╔══██╗██║
+  ██║  ██║█████╗  ██║   ██║██████╔╝██║██║     ██║   ██║   ██║       ███████║██║
+  ██║  ██║██╔══╝  ╚██╗ ██╔╝██╔═══╝ ██║██║     ██║   ██║   ██║       ██╔══██║██║
+  ██████╔╝███████╗ ╚████╔╝ ██║     ██║███████╗╚██████╔╝   ██║       ██║  ██║██║
+  ╚═════╝ ╚══════╝  ╚═══╝  ╚═╝     ╚═╝╚══════╝ ╚═════╝    ╚═╝       ╚═╝  ╚═╝╚═╝
+```
 
-DevPilot AI is an all-in-one AI-powered platform designed to help software engineering students prepare for internships and placements. Instead of relying on multiple fragmented tools, DevPilot AI combines powerful analyzers, mock interviews, and learning roadmaps into a single polished SaaS-style application.
+# 🚀 𝓓𝓮𝓿𝓟𝓲𝓵𝓸𝓽 • 𝓐𝓘
+### *The Next-Gen Engineering Placement & Career Acceleration Dashboard*
 
-## ✨ Core Modules
-- 📄 **Resume Analyzer**: ATS score analysis, keyword optimization, and action-oriented bullet point enhancement.
-- 🐙 **GitHub Profile Analyzer**: Repository quality assessment, commit consistency analysis, language statistics, and project quality scoring.
-- 🧠 **LeetCode Coach**: Track coding progress, identify weak topics, generate personalized practice plans, and predict interview readiness.
-- 🎤 **AI Mock Interview**: Resume-based technical and behavioral interview practice with AI-generated feedback and communication analysis.
-- 💻 **AI Code Reviewer**: Detect bugs and code smells, time/space complexity analysis, security recommendations, and refactoring suggestions.
-- 📊 **Dashboards & Roadmaps**: Coding progress tracking, placement readiness scoring, and personalized weekly milestones.
+<p align="center">
+  <b>Empowering Software Engineers with ML-Powered ATS Optimization, Deep Career Analytics & AI Intelligence</b>
+</p>
 
-## 🛠️ Tech Stack
-- **Frontend / Deployment**: Streamlit & Streamlit Community Cloud
-- **Backend**: Python
-- **AI Models**: Google Gemini (or OpenAI GPT)
-- **Database**: SQLite
-- **Visualization**: Plotly
-- **Speech Integration**: Whisper (Speech-to-Text), ElevenLabs (Text-to-Speech)
+[![Python](https://img.shields.io/badge/Python-3.10%2B-3776AB?style=for-the-badge&logo=python&logoColor=white)](https://www.python.org/)
+[![Streamlit](https://img.shields.io/badge/Streamlit-1.40%2B-FF4B4B?style=for-the-badge&logo=streamlit&logoColor=white)](https://streamlit.io/)
+[![Google Gemini](https://img.shields.io/badge/Google%20Gemini-1.5%20Flash-8E75B2?style=for-the-badge&logo=google&logoColor=white)](https://ai.google.dev/)
+[![License: MIT](https://img.shields.io/badge/License-MIT-F59E0B?style=for-the-badge)](LICENSE)
+[![PRs Welcome](https://img.shields.io/badge/PRs-Welcome-10B981?style=for-the-badge)](https://github.com/UdeepChowdary/DevPilot_AI/pulls)
+
+<p align="center">
+  <a href="#-feature-spotlight-resume-analyzer"><b>📄 Resume Analyzer</b></a> •
+  <a href="#-getting-started"><b>🚀 Quick Start</b></a> •
+  <a href="#-modules-overview"><b>🌟 Modules</b></a> •
+  <a href="#-project-structure"><b>🛠️ Architecture</b></a> •
+  <a href="#-product-roadmap"><b>🗺️ Roadmap</b></a>
+</p>
+
+---
+
+</div>
+
+## 💡 About DevPilot AI
+
+**DevPilot AI** is an all-in-one AI & NLP-powered suite built specifically for software engineering students and candidates preparing for top-tier tech internships and placement seasons. Instead of juggling disconnected tools or paying for subscription-gated resume checkers, DevPilot AI combines **100% offline heuristic ML engines** with optional **Google Gemini AI intelligence** to deliver actionable, transparent, and accurate career tools.
+
+---
+
+## 🌟 Modules Overview
+
+| Module | Status | Core Technologies & Capabilities |
+| :--- | :---: | :--- |
+| 📄 **Resume Analyzer** | **✅ Live** | ATS scoring (0–100), layout-aware PDF/DOCX parsing, TF-IDF keyword match, 200+ skill taxonomy, Google XYZ bullet rewriter. |
+| 🐙 **GitHub Profile Analyzer** | 🔜 Coming Soon | Repository quality audit, commit streak heatmaps, language distribution, and project impact scoring. |
+| 💻 **AI Code Reviewer** | 🔜 Coming Soon | Automated bug detection, asymptotic time/space complexity analysis ($O(N)$), and architectural refactoring suggestions. |
+| 🎤 **AI Mock Interview** | 🔜 Coming Soon | Resume-tailored behavioral & technical interview simulation with speech transcription and pacing critique. |
+| 🧠 **LeetCode Coach** | 🔜 Coming Soon | Algorithmic topic radar, weak-pattern diagnostic, and automated weekly practice roadmaps. |
+| 📊 **Placement Dashboard** | 🔜 Coming Soon | Consolidated readiness scorecard, milestone tracker, and application pipeline manager. |
+
+---
+
+## 📄 Feature Spotlight: Resume Analyzer
+
+The **Resume Analyzer** combines machine learning text analytics, NLP parsing, and generative AI to deliver comprehensive resume critiques:
+
+### 1. 📑 Multi-Format & Layout-Aware Parsing
+- Supports **PDF**, Microsoft Word (**`.docx`**), and plain text (**`.txt`**).
+- Implements topologically sorted block extraction via **PyMuPDF** to prevent text corruption on modern 2-column resume designs.
+- Accurately detects and maps core resume sections (*Summary, Experience, Education, Skills, Projects, Certifications, Leadership*).
+
+### 2. 📊 Normalized ATS Scoring Engine (0–100)
+- **Keyword Alignment**: TF-IDF cosine similarity against target Job Descriptions (or vocabulary richness if no JD is provided).
+- **Impact & Action Verbs**: Evaluates the density of high-impact engineering action verbs across both past and active tenses (*Spearheaded, Architected, Engineered, Optimized*).
+- **Smart Metric Detection**: Identifies true quantified outcomes (%, $, latency in ms, scale in users/events) while filtering out false positives like graduation years and phone numbers.
+- **Section & Format Completeness**: Evaluates structural integrity, word count conciseness (350–850 words), and contact information presence.
+
+### 3. 🔑 Comprehensive 200+ Tech Skills Taxonomy
+- Pre-built taxonomy covering languages, frontend, backend, databases, cloud, DevOps, AI/ML, and system design.
+- Whitelists critical 1-2 letter skills (`Go`, `C`, `R`, `AI`, `ML`, `CI`, `CD`, `UI`, `UX`) to ensure short acronyms are never missed.
+- Generates interactive **Matched vs. Missing Skills** chip visualizations and requirement coverage charts.
+
+### 4. ✨ Multi-Engine Bullet Point Enhancer
+- **⚡ Fast Rule-Based Mode**: Instant offline verb replacement and grammar cleanup (e.g. *"Helped to build"* $\rightarrow$ *"Constructed"* / *"Engineered"*).
+- **🧠 Gemini AI Mode**: Leverages Google's **XYZ Formula** (*"Accomplished [X] as measured by [Y], by doing [Z]"*) to generate top-tier Silicon Valley recruiter-ready bullet rewrites.
+- **🤖 Local T5 Mode**: Offline neural summarization and refinement via Hugging Face Transformers.
+- **1-Click Copy Snippets**: Copy any enhanced bullet directly into your clipboard with a single click.
+
+### 5. 📥 Exportable ATS Audit Report
+- Generate and download a complete Markdown audit report summarizing overall scores, component breakdowns, strengths, areas for improvement, keyword gaps, and bullet rewrites.
+
+---
+
+## 🛠️ Project Structure
+
+```bash
+DevPilot_AI/
+├── app.py                      # Main landing page & module dashboard
+├── requirements.txt            # Python dependencies
+├── pages/
+│   └── 1_📄_Resume_Analyzer.py # Resume Analyzer UI & interactive workflows
+├── utils/
+│   ├── __init__.py
+│   ├── resume_parser.py        # PDF, DOCX, TXT extraction & section detection
+│   ├── ats_scorer.py           # ATS scoring algorithm (TF-IDF & heuristics)
+│   ├── keyword_extractor.py    # RAKE, spaCy & 200+ Tech skills taxonomy
+│   ├── bullet_enhancer.py      # Rule-based, Gemini XYZ, and T5 enhancers
+│   └── gemini_client.py        # Google Gemini API connector
+└── LICENSE                     # MIT License
+```
+
+---
 
 ## 🚀 Getting Started
 
 ### Prerequisites
-- Python 3.10+
-- An API Key for Google Gemini (or OpenAI)
+- Python **3.10+**
+- (Optional) A [Google Gemini API Key](https://aistudio.google.com/) for smart AI rewrites.
 
-### Installation
-1. Clone the repository:
-   ```bash
-   git clone https://github.com/UdeepChowdary/DevPilot_AI.git
-   cd DevPilot_AI
-   ```
-2. Install dependencies:
-   ```bash
-   pip install -r requirements.txt
-   ```
-3. Set up your environment variables:
-   Create a `.env` file in the root directory and add your API key:
-   ```env
-   GEMINI_API_KEY=your_api_key_here
-   ```
-4. Run the application:
-   ```bash
-   streamlit run app.py
-   ```
+### 1. Clone the Repository
+```bash
+git clone https://github.com/UdeepChowdary/DevPilot_AI.git
+cd DevPilot_AI
+```
 
-## 🗺️ Roadmap
-- **v1.0** – Resume Analyzer + GitHub Analyzer *(Current Focus)*
-- **v1.5** – AI Code Reviewer
-- **v2.0** – AI Mock Interview
-- **v2.5** – LeetCode Coach
-- **v3.0+** – System Design Mentor, Recruiter Dashboard, Team Collaboration & Leaderboards
+### 2. Set Up Virtual Environment & Dependencies
+```bash
+python -m venv venv
+
+# Windows:
+.\venv\Scripts\activate
+
+# macOS / Linux:
+source venv/bin/activate
+
+pip install -r requirements.txt
+```
+
+### 3. (Optional) Configure Gemini API Key
+Create a `.env` file in the root directory:
+```env
+GEMINI_API_KEY=your_gemini_api_key_here
+```
+*(Note: DevPilot AI can run 100% offline without an API key using built-in rule-based and local NLP heuristics!)*
+
+### 4. Launch the Dashboard
+```bash
+streamlit run app.py
+```
+Open your browser at `http://localhost:8501`.
+
+---
+
+## 🗺️ Product Roadmap
+
+- [x] **v1.0**: Resume Analyzer (ATS Scoring, Keyword Matching, Multi-engine Bullets, PDF/DOCX Support, Report Exporter)
+- [ ] **v1.1**: GitHub Profile Analyzer (Repo quality metrics, commit heatmaps, tech breakdown)
+- [ ] **v1.5**: AI Code Reviewer (Static analysis, complexity calculation, refactoring tips)
+- [ ] **v2.0**: AI Mock Interview (Resume-tailored questions, audio transcription, feedback)
+- [ ] **v2.5**: LeetCode Algorithmic Coach & Placement Readiness Tracker
+
+---
+
+## 📄 License
+
+This project is licensed under the MIT License — see the [LICENSE](LICENSE) file for details.

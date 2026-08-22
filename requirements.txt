@@ -1,5 +1,13 @@
 streamlit
-google-generativeai
-python-dotenv
 plotly
 requests
+PyMuPDF
+python-docx
+spacy
+rake-nltk
+scikit-learn
+transformers
+torch
+nltk
+python-dotenv
+google-generativeai
