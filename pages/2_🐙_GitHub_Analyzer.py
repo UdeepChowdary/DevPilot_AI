@@ -42,6 +42,14 @@ st.markdown("""
 .hero-github h1 { font-size: 2.2rem; font-weight: 800; margin: 0 0 0.5rem 0; }
 .hero-github p  { font-size: 0.95rem; color: #8b949e; margin: 0; line-height: 1.6; }
 
+.input-box-card {
+    background: #161b22;
+    border: 1px solid #30363d;
+    border-radius: 14px;
+    padding: 1.5rem;
+    margin-bottom: 1.5rem;
+}
+
 .profile-card {
     background: linear-gradient(135deg, #161b22, #0d1117);
     border: 1px solid #30363d;
@@ -64,12 +72,6 @@ st.markdown("""
     color: #e6edf3;
     margin-right: 0.5rem;
     margin-bottom: 0.4rem;
-}
-
-.score-badge {
-    font-size: 3rem;
-    font-weight: 800;
-    line-height: 1;
 }
 
 .badge-pass {
@@ -133,51 +135,10 @@ st.markdown("""
     padding: 1.2rem;
     margin-bottom: 1.2rem;
 }
+
+div[data-testid="stTabs"] button { font-weight: 600; font-size: 0.95rem; }
 </style>
 """, unsafe_allow_html=True)
-
-# ─── Sidebar Settings ─────────────────────────────────────────────────────────
-with st.sidebar:
-    st.markdown("### ⚙️ GitHub Analyzer Settings")
-    
-    st.markdown("**1. Target Profile**")
-    username_input = st.text_input(
-        "GitHub Username",
-        placeholder="e.g. torvalds, tiangolo, your-handle",
-        help="Enter any public GitHub username.",
-    )
-    
-    # Preset quick selector
-    preset_cols = st.columns(3)
-    if preset_cols[0].button("tiangolo", use_container_width=True):
-        username_input = "tiangolo"
-    if preset_cols[1].button("karpathy", use_container_width=True):
-        username_input = "karpathy"
-    if preset_cols[2].button("charliermarsh", use_container_width=True):
-        username_input = "charliermarsh"
-
-    st.markdown("---")
-    st.markdown("**2. GitHub Token (Optional)**")
-    github_pat = st.text_input(
-        "Personal Access Token (PAT)",
-        type="password",
-        placeholder="ghp_xxxxxxxxxxxx",
-        help="Optional. Unauthenticated requests are limited to 60/hr. A token increases limit to 5,000/hr.",
-    )
-
-    st.markdown("---")
-    st.markdown("**3. Google Gemini AI (Optional)**")
-    gemini_key_input = st.text_input(
-        "Gemini API Key",
-        type="password",
-        placeholder="AIzaSy...",
-        help="Optional. Generates AI recruiter critiques and XYZ resume bullets.",
-    )
-    if not gemini_key_input and os.getenv("GEMINI_API_KEY"):
-        gemini_key_input = os.getenv("GEMINI_API_KEY")
-
-    st.markdown("---")
-    analyze_btn = st.button("🚀 Analyze GitHub Profile", type="primary", use_container_width=True)
 
 # ─── Main Hero ────────────────────────────────────────────────────────────────
 st.markdown("""
@@ -187,32 +148,91 @@ st.markdown("""
 </div>
 """, unsafe_allow_html=True)
 
+# ─── Main Content Input Area ──────────────────────────────────────────────────
+col_input, col_adv = st.columns([1.2, 1], gap="large")
+
+with col_input:
+    st.markdown("### 1. Enter Target GitHub Profile")
+    
+    # Initialize session state for input value if not set
+    if "gh_target_user" not in st.session_state:
+        st.session_state["gh_target_user"] = ""
+
+    username_val = st.text_input(
+        "GitHub Username",
+        value=st.session_state["gh_target_user"],
+        placeholder="e.g. torvalds, tiangolo, your-handle",
+        help="Enter any public GitHub username.",
+        key="username_field",
+    )
+
+    st.markdown("<p style='color:#8b949e; font-size:0.82rem; margin-top:-0.5rem;'>Quick sample profiles:</p>", unsafe_allow_html=True)
+    p_col1, p_col2, p_col3, p_col4 = st.columns(4)
+    if p_col1.button("tiangolo", use_container_width=True):
+        st.session_state["gh_target_user"] = "tiangolo"
+        st.rerun()
+    if p_col2.button("karpathy", use_container_width=True):
+        st.session_state["gh_target_user"] = "karpathy"
+        st.rerun()
+    if p_col3.button("charliermarsh", use_container_width=True):
+        st.session_state["gh_target_user"] = "charliermarsh"
+        st.rerun()
+    if p_col4.button("torvalds", use_container_width=True):
+        st.session_state["gh_target_user"] = "torvalds"
+        st.rerun()
+
+with col_adv:
+    st.markdown("### 2. Optional Credentials")
+    with st.expander("🔑 GitHub Token & Gemini AI Options", expanded=False):
+        github_pat = st.text_input(
+            "GitHub Personal Access Token (PAT)",
+            type="password",
+            placeholder="ghp_xxxxxxxxxxxx",
+            help="Optional. Unauthenticated requests are limited to 60/hr. A token unlocks 5,000/hr.",
+        )
+        gemini_key_input = st.text_input(
+            "Gemini API Key (Optional)",
+            type="password",
+            placeholder="AIzaSy...",
+            help="Optional. Generates custom AI recruiter critiques and XYZ resume bullets.",
+        )
+        if not gemini_key_input and os.getenv("GEMINI_API_KEY"):
+            gemini_key_input = os.getenv("GEMINI_API_KEY")
+
+st.markdown("<br>", unsafe_allow_html=True)
+analyze_btn = st.button("🚀 Analyze GitHub Profile", type="primary", use_container_width=True)
+
 # ─── Execution Logic ──────────────────────────────────────────────────────────
-if analyze_btn and username_input:
-    clean_user = username_input.strip()
-    with st.spinner(f"Fetching public profile and repositories for @{clean_user}..."):
-        try:
-            gh_data = fetch_complete_github_data(
-                username=clean_user,
-                token=github_pat.strip() if github_pat else None,
-            )
-            audit_result = audit_github_profile(gh_data)
-            
-            # Save into session_state for persistence across rerenders
-            st.session_state["gh_data"] = gh_data
-            st.session_state["gh_audit"] = audit_result
-            st.session_state["gh_user"] = clean_user
-            st.session_state["gh_ai_critique"] = None  # Reset critique on new user
-            
-        except ValueError as ve:
-            st.error(f"⚠️ {str(ve)}")
-        except PermissionError as pe:
-            st.error(f"🔒 {str(pe)}")
-        except Exception as e:
-            st.error(f"❌ Error fetching GitHub data: {str(e)}")
+active_user = username_val.strip() if username_val else st.session_state.get("gh_target_user", "").strip()
+
+if analyze_btn:
+    if not active_user:
+        st.warning("Please enter a valid GitHub username to analyze.")
+    else:
+        with st.spinner(f"Fetching public profile and repositories for @{active_user}..."):
+            try:
+                gh_data = fetch_complete_github_data(
+                    username=active_user,
+                    token=github_pat.strip() if github_pat else None,
+                )
+                audit_result = audit_github_profile(gh_data)
+                
+                # Save into session_state for persistence across rerenders
+                st.session_state["gh_data"] = gh_data
+                st.session_state["gh_audit"] = audit_result
+                st.session_state["gh_user"] = active_user
+                st.session_state["gh_ai_critique"] = None  # Reset critique on new user
+                
+            except ValueError as ve:
+                st.error(f"⚠️ {str(ve)}")
+            except PermissionError as pe:
+                st.error(f"🔒 {str(pe)}")
+            except Exception as e:
+                st.error(f"❌ Error fetching GitHub data: {str(e)}")
 
 # ─── Results Rendering ────────────────────────────────────────────────────────
 if "gh_data" in st.session_state and "gh_audit" in st.session_state:
+    st.markdown("---")
     gh_data = st.session_state["gh_data"]
     audit = st.session_state["gh_audit"]
     profile = gh_data["profile"]
@@ -225,7 +245,6 @@ if "gh_data" in st.session_state and "gh_audit" in st.session_state:
     avatar = profile.get("avatar_url", "")
     p_name = profile.get("name") or profile.get("login")
     p_bio = profile.get("bio") or "*(No bio provided on profile)*"
-    p_blog = profile.get("blog") or ""
     p_location = profile.get("location") or "Worldwide"
     p_company = profile.get("company") or "Independent"
 
@@ -583,7 +602,7 @@ else:
     <div style="font-size: 3rem; margin-bottom: 0.8rem;">🐙</div>
     <h3 style="color: #f0f6fc; margin-bottom: 0.5rem;">Ready to Audit Your GitHub Presence</h3>
     <p style="max-width: 550px; margin: 0 auto 1.5rem auto; line-height: 1.6;">
-        Enter any public GitHub username in the sidebar to calculate your Developer Portfolio Readiness Score (0–100), audit repository documentation, and generate recruiter-ready resume bullet points.
+        Enter any public GitHub username above to calculate your Developer Portfolio Readiness Score (0–100), audit repository documentation, and generate recruiter-ready resume bullet points.
     </p>
 </div>
 """, unsafe_allow_html=True)
