@@ -132,8 +132,9 @@ modules = [
     {
         "icon": "🐙",
         "title": "GitHub Profile Analyzer",
-        "desc": "Repo quality scoring, commit consistency, language breakdown, and project quality assessment.",
-        "status": "soon",
+        "desc": "Portfolio readiness scoring (0–100), repository hygiene audit, language breakdown, and AI resume bullets.",
+        "status": "live",
+        "page": "pages/2_🐙_GitHub_Analyzer.py",
     },
     {
         "icon": "💻",
