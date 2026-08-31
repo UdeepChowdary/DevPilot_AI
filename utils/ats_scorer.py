@@ -14,34 +14,9 @@ nltk.download("punkt", quiet=True)
 nltk.download("punkt_tab", quiet=True)
 
 from nltk.corpus import stopwords
+from utils.constants import ACTION_VERBS, WEAK_VERBS
 
 STOPWORDS = set(stopwords.words("english"))
-
-# Strong action verbs (both past and present tense) associated with high-impact bullets
-ACTION_VERBS = {
-    # Past Tense
-    "achieved", "accelerated", "architected", "automated", "built", "championed", "constructed",
-    "created", "decreased", "delivered", "deployed", "designed", "developed", "directed",
-    "drove", "enhanced", "engineered", "established", "executed", "formulated", "generated",
-    "grew", "implemented", "improved", "increased", "initiated", "integrated", "launched",
-    "led", "managed", "mentored", "migrated", "modernized", "optimized", "orchestrated",
-    "oversaw", "pioneered", "produced", "programmed", "reduced", "refactored", "resolved",
-    "revamped", "scaled", "spearheaded", "standardized", "streamlined", "transformed",
-
-    # Present Tense (for current roles)
-    "achieve", "accelerate", "architect", "automate", "build", "champion", "construct",
-    "create", "decrease", "deliver", "deploy", "design", "develop", "direct",
-    "drive", "enhance", "engineer", "establish", "execute", "generate",
-    "grow", "implement", "improve", "increase", "initiate", "integrate", "launch",
-    "lead", "manage", "mentor", "migrate", "modernize", "optimize", "orchestrate",
-    "oversee", "pioneer", "produce", "program", "reduce", "refactor", "resolve",
-    "scale", "spearhead", "streamline", "transform",
-}
-
-WEAK_VERBS = {
-    "helped", "assisted", "worked", "participated", "was", "did", "made",
-    "got", "had", "went", "used", "tried", "supported", "involved", "responsible",
-}
 
 EXPECTED_SECTIONS = {"experience", "education", "skills", "projects"}
 KNOWN_HEADERS = {
@@ -50,6 +25,32 @@ KNOWN_HEADERS = {
     "PROFESSIONAL EXPERIENCE", "ACADEMIC BACKGROUND", "ACHIEVEMENTS",
     "PUBLICATIONS", "LEADERSHIP", "EXTRACURRICULAR", "AWARDS",
 }
+
+# Precompiled quantification patterns — each pattern is distinct to avoid double-counting.
+# Order matters: more specific patterns are listed first.
+_QUANT_PATTERNS = [
+    re.compile(r"\$\s*\d+[\.,]?\d*", re.IGNORECASE),                                          # $100, $50k
+    re.compile(r"\b\d+[\.,]?\d*\s*%", re.IGNORECASE),                                         # 45%, 30.5%
+    re.compile(r"\b\d+[\.,]?\d*\s*[xX]\b", re.IGNORECASE),                                    # 3x, 2X
+    re.compile(r"\b\d+[\.,]?\d*\s*(?:k|m|million|billion)\b", re.IGNORECASE),                  # 10k, 5M
+    re.compile(r"\b\d+\s*\+(?!\d)", re.IGNORECASE),                                           # 100+  (not 100+200)
+    re.compile(                                                                                 # 500ms, 2 seconds
+        r"\b\d+[\.,]?\d*\s*(?:ms|s|sec|seconds|minutes|hours|days|fps|qps|rps)\b",
+        re.IGNORECASE,
+    ),
+    re.compile(                                                                                 # 10k users
+        r"\b\d+[\.,]?\d*\s*(?:users|clients|customers|requests|events|queries|tickets|nodes|services|endpoints|repos)\b",
+        re.IGNORECASE,
+    ),
+    # NOTE: kept separate to avoid double-counting with % pattern above
+    re.compile(
+        r"(?:reduced|increased|boosted|improved|saved|scaled|decreased|cut)\s+(?:by|to)?\s*\d+(?!\s*%)",
+        re.IGNORECASE,
+    ),
+]
+
+# Phone regex — requires 10+ consecutive digit characters to avoid matching GPA, years, etc.
+_PHONE_RE = re.compile(r"\+?[\d][\d\s\-\(\)\.]{9,}\d")
 
 
 # ─── Helpers ──────────────────────────────────────────────────────────────────
@@ -61,22 +62,22 @@ def _tokenize(text: str) -> list[str]:
 
 def _count_quantifications(text: str) -> int:
     """
-    Count occurrences of meaningful quantified metrics (%, ms, $, scale multipliers, reduction/increase).
-    Filters out graduation/employment years (e.g. 2020-2024), phone numbers, and GPAs.
+    Count distinct occurrences of meaningful quantified metrics.
+    Uses non-overlapping matches and deduplicates by span to avoid double-counting
+    bullets that match multiple patterns (e.g. 'reduced by 45%').
     """
-    patterns = [
-        r"\$\s*\d+[\.,]?\d*",
-        r"\b\d+[\.,]?\d*\s*%",
-        r"\b\d+[\.,]?\d*\s*[xX]\b",
-        r"\b\d+[\.,]?\d*\s*(?:k|m|million|billion)\b",
-        r"\b\d+\s*\+",
-        r"\b\d+[\.,]?\d*\s*(?:users|clients|customers|requests|events|queries|tickets|ms|s|sec|seconds|hours|days|fps|qps|rps)\b",
-        r"(?:reduced|increased|boosted|improved|saved|scaled|decreased|cut)\s+(?:by|to)?\s*\d+",
-    ]
-    total_matches = 0
-    for p in patterns:
-        total_matches += len(re.findall(p, text, re.IGNORECASE))
-    return total_matches
+    matched_spans: set[tuple[int, int]] = set()
+    for pattern in _QUANT_PATTERNS:
+        for m in pattern.finditer(text):
+            span = (m.start(), m.end())
+            # Only count if this span doesn't significantly overlap an already-counted one
+            overlaps = any(
+                abs(span[0] - s[0]) < 5  # within 5 chars = same metric
+                for s in matched_spans
+            )
+            if not overlaps:
+                matched_spans.add(span)
+    return len(matched_spans)
 
 
 def _count_action_verbs(text: str) -> int:
@@ -111,12 +112,15 @@ def _score_keyword_match(resume_text: str, jd_text: str | None) -> dict:
             score = 18
         return {"score": score, "max": 30, "label": "Keyword Alignment (vs JD)"}
     else:
-        # Without JD: score based on tech & vocabulary richness scaled to 30
+        # Without JD: score based on tech & vocabulary richness scaled to 30.
+        # Normalize by word count bracket to avoid penalizing short but dense resumes.
         tokens = _tokenize(resume_text)
-        unique_ratio = len(set(tokens)) / max(len(tokens), 1)
-        # Typical diverse resume unique_ratio is ~0.45-0.65
-        score = round(min((unique_ratio / 0.5) * 25, 30))
-        score = max(score, 10)
+        wc = max(len(tokens), 1)
+        unique_ratio = len(set(tokens)) / wc
+        # Target ratio: 0.4–0.6 for a well-written tech resume
+        normalized = min(unique_ratio / 0.45, 1.0)
+        score = round(max(normalized * 25, 10))
+        score = min(score, 30)
         return {"score": score, "max": 30, "label": "Keyword & Vocabulary Richness"}
 
 
@@ -179,10 +183,12 @@ def _score_formatting(text: str) -> dict:
     if re.search(r"[•\-\*\u2022\u25cf\u25e6\u25aa\u25ab\u2192]", text):
         score += 3
 
-    # Contact info: email and phone / LinkedIn (4 pts)
-    if re.search(r"[\w\.-]+@[\w\.-]+\.\w+", text):
+    # Contact info: email (2 pts) and phone / LinkedIn (2 pts)
+    if re.search(r"[\w\.\-]+@[\w\.\-]+\.\w+", text):
         score += 2
-    if re.search(r"\+?\d[\d\s\-\(\)]{8,}", text) or "linkedin.com" in text.lower():
+
+    # Phone: require 10+ consecutive digit characters (avoids GPA/year false positives)
+    if _PHONE_RE.search(text) or "linkedin.com" in text.lower():
         score += 2
 
     # ALL CAPS check: ignore recognized standard headers (3 pts)

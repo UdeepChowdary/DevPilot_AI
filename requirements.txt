@@ -1,13 +1,42 @@
-streamlit
+# Core web framework
+streamlit>=1.28.0
+
+# Visualization
 plotly
+
+# HTTP client
 requests
+
+# PDF generation (pure Python, no system dependencies)
+fpdf2
+
+# PDF parsing (layout-aware)
 PyMuPDF
+
+# Word document parsing
 python-docx
+
+# NLP & keyword extraction
 spacy
 rake-nltk
+
+# ML scoring
 scikit-learn
+
+# NLP downloads required after install:
+#   python -m spacy download en_core_web_sm
+
+# Neural bullet enhancement (CPU-only to avoid pulling 2GB+ CUDA builds)
 transformers
+--extra-index-url https://download.pytorch.org/whl/cpu
 torch
+
+# Text processing
 nltk
+
+# Environment variables
 python-dotenv
-google-generativeai
+
+# Google AI — new SDK (preferred); legacy google-generativeai used as fallback if not installed
+google-genai
+# google-generativeai  # uncomment as fallback if google-genai is unavailable

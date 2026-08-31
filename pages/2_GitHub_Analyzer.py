@@ -1,5 +1,5 @@
 """
-🐙 GitHub Profile Analyzer — DevPilot AI
+GitHub Profile Analyzer — DevPilot AI
 Evaluates developer portfolio readiness, repository hygiene, coding activity,
 and language diversity from a tech recruiter's perspective with AI critique & resume translation.
 """
@@ -17,6 +17,7 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 from utils.github_fetcher import fetch_complete_github_data
 from utils.github_scorer import audit_github_profile, generate_markdown_report
 from utils.github_ai_reviewer import generate_ai_critique
+from utils.pdf_generator import generate_github_pdf
 
 # ─── Page Config ──────────────────────────────────────────────────────────────
 st.set_page_config(
@@ -32,15 +33,29 @@ st.markdown("""
 * { font-family: 'Inter', sans-serif; }
 
 .hero-github {
-    background: linear-gradient(135deg, #0d1117 0%, #161b22 50%, #21262d 100%);
+    background: linear-gradient(135deg, #0f0c29 0%, #302b63 50%, #24243e 100%);
     border-radius: 16px;
     padding: 2.2rem 2.4rem;
     margin-bottom: 1.8rem;
     border: 1px solid rgba(99, 102, 241, 0.25);
     color: white;
+    position: relative;
+    overflow: hidden;
 }
-.hero-github h1 { font-size: 2.2rem; font-weight: 800; margin: 0 0 0.5rem 0; }
-.hero-github p  { font-size: 0.95rem; color: #8b949e; margin: 0; line-height: 1.6; }
+.hero-github::before {
+    content: '';
+    position: absolute;
+    top: -40%;
+    right: -5%;
+    width: 300px;
+    height: 300px;
+    background: radial-gradient(circle, rgba(99,102,241,0.15) 0%, transparent 70%);
+    border-radius: 50%;
+    pointer-events: none;
+}
+.hero-github h1 { font-size: 2.2rem; font-weight: 800; margin: 0 0 0.4rem 0; position: relative; z-index: 1; }
+.hero-accent { width: 50px; height: 3px; background: linear-gradient(90deg, #6366f1, #a855f7); border-radius: 2px; margin-bottom: 0.75rem; position: relative; z-index: 1; }
+.hero-github p  { font-size: 0.95rem; color: #8b949e; margin: 0; line-height: 1.6; position: relative; z-index: 1; }
 
 .input-box-card {
     background: #161b22;
@@ -143,7 +158,8 @@ div[data-testid="stTabs"] button { font-weight: 600; font-size: 0.95rem; }
 # ─── Main Hero ────────────────────────────────────────────────────────────────
 st.markdown("""
 <div class="hero-github">
-    <h1>🐙 GitHub Profile Analyzer & Recruiter Auditor</h1>
+    <h1>GitHub Profile Analyzer &amp; Recruiter Auditor</h1>
+    <div class="hero-accent"></div>
     <p>Comprehensive engineering portfolio audit. Evaluates repository hygiene, code recency, technology stack depth, and translates your top projects into hiring-manager-ready resume bullet points.</p>
 </div>
 """, unsafe_allow_html=True)
@@ -183,7 +199,7 @@ with col_input:
 
 with col_adv:
     st.markdown("### 2. Optional Credentials")
-    with st.expander("🔑 GitHub Token & Gemini AI Options", expanded=False):
+    with st.expander("GitHub Token & Gemini AI Options", expanded=False):
         github_pat = st.text_input(
             "GitHub Personal Access Token (PAT)",
             type="password",
@@ -200,7 +216,7 @@ with col_adv:
             gemini_key_input = os.getenv("GEMINI_API_KEY")
 
 st.markdown("<br>", unsafe_allow_html=True)
-analyze_btn = st.button("🚀 Analyze GitHub Profile", type="primary", use_container_width=True)
+analyze_btn = st.button("Analyze GitHub Profile", type="primary", use_container_width=True)
 
 # ─── Execution Logic ──────────────────────────────────────────────────────────
 active_user = username_val.strip() if username_val else st.session_state.get("gh_target_user", "").strip()
@@ -209,26 +225,40 @@ if analyze_btn:
     if not active_user:
         st.warning("Please enter a valid GitHub username to analyze.")
     else:
-        with st.spinner(f"Fetching public profile and repositories for @{active_user}..."):
-            try:
-                gh_data = fetch_complete_github_data(
-                    username=active_user,
-                    token=github_pat.strip() if github_pat else None,
-                )
-                audit_result = audit_github_profile(gh_data)
-                
-                # Save into session_state for persistence across rerenders
-                st.session_state["gh_data"] = gh_data
-                st.session_state["gh_audit"] = audit_result
-                st.session_state["gh_user"] = active_user
-                st.session_state["gh_ai_critique"] = None  # Reset critique on new user
-                
-            except ValueError as ve:
-                st.error(f"⚠️ {str(ve)}")
-            except PermissionError as pe:
-                st.error(f"🔒 {str(pe)}")
-            except Exception as e:
-                st.error(f"❌ Error fetching GitHub data: {str(e)}")
+        progress_bar = st.progress(0, text=f"Starting analysis for @{active_user}...")
+        try:
+            progress_bar.progress(15, text="👤 Fetching GitHub profile...")
+            progress_bar.progress(35, text="Loading repositories (paginating if needed)...")
+            gh_data = fetch_complete_github_data(
+                username=active_user,
+                token=github_pat.strip() if github_pat else None,
+            )
+            progress_bar.progress(70, text="Running portfolio scoring engine...")
+            audit_result = audit_github_profile(gh_data)
+            progress_bar.progress(95, text="Finalizing audit report...")
+
+            # Save into session_state for persistence across rerenders
+            st.session_state["gh_data"] = gh_data
+            st.session_state["gh_audit"] = audit_result
+            st.session_state["gh_user"] = active_user
+            st.session_state["gh_ai_critique"] = None  # Reset critique on new user
+
+            # Also persist GitHub score in top-level session_state for sidebar KPI
+            st.session_state["github_audit"] = audit_result
+
+            progress_bar.progress(100, text="Analysis complete!")
+
+        except ValueError as ve:
+            progress_bar.empty()
+            st.error(f"⚠️ {str(ve)}")
+        except PermissionError as pe:
+            progress_bar.empty()
+            st.error(f"{str(pe)}")
+        except Exception as e:
+            progress_bar.empty()
+            st.error(f"Error fetching GitHub data: {str(e)}")
+        finally:
+            progress_bar.empty()
 
 # ─── Results Rendering ────────────────────────────────────────────────────────
 if "gh_data" in st.session_state and "gh_audit" in st.session_state:
@@ -260,10 +290,10 @@ if "gh_data" in st.session_state and "gh_audit" in st.session_state:
             <div class="profile-login">@{profile.get('login')}</div>
             <div class="profile-bio">{p_bio}</div>
             <div>
-                <span class="stat-pill">📍 {p_location}</span>
-                <span class="stat-pill">🏢 {p_company}</span>
-                <span class="stat-pill">👥 {profile.get('followers', 0)} followers</span>
-                <span class="stat-pill">📦 {stats['original_repo_count']} original repos</span>
+                <span class="stat-pill">{p_location}</span>
+                <span class="stat-pill">{p_company}</span>
+                <span class="stat-pill">{profile.get('followers', 0)} followers</span>
+                <span class="stat-pill">{stats['original_repo_count']} original repos</span>
                 <span class="stat-pill">⭐ {stats['total_stars']} stars earned</span>
             </div>
         </div>
@@ -302,16 +332,16 @@ if "gh_data" in st.session_state and "gh_audit" in st.session_state:
         st.plotly_chart(fig_gauge, use_container_width=True)
 
     # ── Dimension Metric Quick Cards ──
-    st.markdown("#### 🧭 Score Breakdown by Dimension")
+    st.markdown("#### Score Breakdown by Dimension")
     dim_cols = st.columns(5)
     dims = audit["dimensions"]
 
     dim_keys = [
         ("profile_completeness", "Profile Info", "👤"),
-        ("repo_quality", "Repo Hygiene", "🛠️"),
-        ("activity_consistency", "Commit Activity", "⚡"),
-        ("language_diversity", "Tech Depth", "💻"),
-        ("community_impact", "Impact & Stars", "🌟"),
+        ("repo_quality", "Repo Hygiene", ""),
+        ("activity_consistency", "Commit Activity", ""),
+        ("language_diversity", "Tech Depth", ""),
+        ("community_impact", "Impact & Stars", ""),
     ]
 
     for idx, (dkey, dlabel, dicon) in enumerate(dim_keys):
@@ -327,11 +357,11 @@ if "gh_data" in st.session_state and "gh_audit" in st.session_state:
 
     # ── Interactive Navigation Tabs ──
     tabs = st.tabs([
-        "📊 Portfolio Diagnostics & Plan",
-        "🛠️ Repository Health Audit",
-        "💻 Tech Stack & Languages",
-        "🧠 AI Recruiter Coach & Resume Bullets",
-        "📥 Export Audit Report",
+        "Portfolio Diagnostics & Plan",
+        "Repository Health Audit",
+        "Tech Stack & Languages",
+        "AI Recruiter Coach & Resume Bullets",
+        "Export Audit Report",
     ])
 
     # ──────────────────────────────────────────────────────────────────────────
@@ -341,22 +371,22 @@ if "gh_data" in st.session_state and "gh_audit" in st.session_state:
         c1, c2 = st.columns([1.2, 1], gap="large")
 
         with c1:
-            st.markdown("### 📋 Recruiter Audit Verdict")
-            st.info(audit["verdict"], icon="💡")
+            st.markdown("### Recruiter Audit Verdict")
+            st.info(audit["verdict"], icon="")
 
             # Green Flags vs Red Flags
             if audit["green_flags"]:
-                st.markdown("##### 🟢 Green Flags (Recruiter Favorites)")
+                st.markdown("##### Green Flags (Recruiter Favorites)")
                 for gf in audit["green_flags"]:
-                    st.markdown(f"- ✅ **{gf}**")
+                    st.markdown(f"- **{gf}**")
 
             if audit["red_flags"]:
-                st.markdown("##### 🔴 Red Flags (Immediate Fixes Recommended)")
+                st.markdown("##### Red Flags (Immediate Fixes Recommended)")
                 for rf in audit["red_flags"]:
                     st.markdown(f"- ⚠️ **{rf}**")
 
             st.markdown("<br>", unsafe_allow_html=True)
-            st.markdown("### 🚀 Prioritized Action Plan")
+            st.markdown("### Prioritized Action Plan")
             st.caption("Ranked checklist to rapidly increase your developer portfolio score.")
             for i, act in enumerate(audit["action_checklist"], 1):
                 card_class = "checklist-card-high" if act["impact"] == "High" else "checklist-card"
@@ -365,7 +395,7 @@ if "gh_data" in st.session_state and "gh_audit" in st.session_state:
     <div style="display: flex; justify-content: space-between; align-items: center;">
         <span style="font-weight: 700; color: #f0f6fc;">{i}. {act['task']}</span>
         <span>
-            <span class="stat-pill" style="color:#f59e0b; border-color:#f59e0b;">⚡ {act['impact']} Impact</span>
+            <span class="stat-pill" style="color:#f59e0b; border-color:#f59e0b;">{act['impact']} Impact</span>
             <span class="stat-pill">⏱️ {act['effort']}</span>
         </span>
     </div>
@@ -373,18 +403,30 @@ if "gh_data" in st.session_state and "gh_audit" in st.session_state:
 """, unsafe_allow_html=True)
 
         with c2:
-            st.markdown("### 🕸️ Portfolio Radar Matrix")
+            st.markdown("### Portfolio Radar Matrix")
             r_categories = [d["label"] for d in dims.values()]
             r_values = [(d["score"] / d["max"]) * 100 for d in dims.values()]
-            
+
+            # Color-code fill by overall average score zone
+            avg_score = sum(r_values) / max(len(r_values), 1)
+            if avg_score >= 70:
+                fill_color = "rgba(34, 197, 94, 0.2)"   # green
+                line_color = "#22c55e"
+            elif avg_score >= 50:
+                fill_color = "rgba(234, 179, 8, 0.2)"   # yellow
+                line_color = "#eab308"
+            else:
+                fill_color = "rgba(239, 68, 68, 0.2)"   # red
+                line_color = "#ef4444"
+
             fig_radar = go.Figure()
             fig_radar.add_trace(go.Scatterpolar(
                 r=r_values + [r_values[0]],
                 theta=r_categories + [r_categories[0]],
                 fill='toself',
-                fillcolor='rgba(99, 102, 241, 0.25)',
-                line=dict(color='#818cf8', width=2),
-                name='Portfolio Score'
+                fillcolor=fill_color,
+                line=dict(color=line_color, width=2.5),
+                name='Portfolio Score',
             ))
             fig_radar.update_layout(
                 polar=dict(
@@ -398,7 +440,7 @@ if "gh_data" in st.session_state and "gh_audit" in st.session_state:
             )
             st.plotly_chart(fig_radar, use_container_width=True)
 
-            with st.expander("🔍 View Dimension-Level Strengths & Gaps"):
+            with st.expander("View Dimension-Level Strengths & Gaps"):
                 for key, d in dims.items():
                     st.markdown(f"**{d['label']} ({d['score']}/{d['max']})**")
                     for s in d.get("strengths", []):
@@ -411,7 +453,7 @@ if "gh_data" in st.session_state and "gh_audit" in st.session_state:
     # TAB 2: Repository Health Audit
     # ──────────────────────────────────────────────────────────────────────────
     with tabs[1]:
-        st.markdown("### 🛠️ Repository-by-Repository Health Audit")
+        st.markdown("### Repository-by-Repository Health Audit")
         st.caption("Review individual repository hygiene: descriptions, licenses, live demo links, and star ratings.")
 
         repo_audits = audit.get("repo_audits", [])
@@ -449,12 +491,12 @@ if "gh_data" in st.session_state and "gh_audit" in st.session_state:
 <div class="repo-card">
     <div style="display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap;">
         <div>
-            <a class="repo-title" href="{r['html_url']}" target="_blank">📦 {r['name']}</a>
+            <a class="repo-title" href="{r['html_url']}" target="_blank">{r['name']}</a>
             {demo_link_html}
         </div>
         <div>
             <span class="stat-pill">⭐ {r['stars']} stars</span>
-            <span class="stat-pill">💻 {r['language']}</span>
+            <span class="stat-pill">{r['language']}</span>
             <span class="stat-pill" style="border-color:#6366f1; color:#818cf8; font-weight:700;">Health: {r['health_score']}/100</span>
         </div>
     </div>
@@ -465,15 +507,15 @@ if "gh_data" in st.session_state and "gh_audit" in st.session_state:
 </div>
 """, unsafe_allow_html=True)
                 if r.get("suggestions"):
-                    with st.expander(f"💡 Recommended fixes for {r['name']}"):
+                    with st.expander(f"Recommended fixes for {r['name']}"):
                         for s in r["suggestions"]:
-                            st.markdown(f"- 🔧 {s}")
+                            st.markdown(f"- {s}")
 
     # ──────────────────────────────────────────────────────────────────────────
     # TAB 3: Tech Stack & Languages
     # ──────────────────────────────────────────────────────────────────────────
     with tabs[2]:
-        st.markdown("### 💻 Language Distribution & Tech Stack Mapping")
+        st.markdown("### Language Distribution & Tech Stack Mapping")
         
         lang_bytes = gh_data.get("language_bytes", {})
         if not lang_bytes:
@@ -503,7 +545,7 @@ if "gh_data" in st.session_state and "gh_audit" in st.session_state:
                 st.plotly_chart(fig_pie, use_container_width=True)
 
             with col_stats:
-                st.markdown("##### 📊 Primary Stack Specialization")
+                st.markdown("##### Primary Stack Specialization")
                 sorted_l = sorted(lang_bytes.items(), key=lambda x: x[1], reverse=True)
                 for lang_name, b_count in sorted_l[:6]:
                     pct = (b_count / total_bytes) * 100
@@ -511,7 +553,7 @@ if "gh_data" in st.session_state and "gh_audit" in st.session_state:
                     st.progress(min(pct / 100.0, 1.0))
 
                 st.markdown("<br>", unsafe_allow_html=True)
-                st.markdown("##### 🗂️ Repositories per Language")
+                st.markdown("##### Repositories per Language")
                 for l_name, r_cnt in gh_data.get("language_repo_counts", {}).items():
                     st.markdown(f"- **{l_name}**: {r_cnt} project{'s' if r_cnt > 1 else ''}")
 
@@ -519,14 +561,14 @@ if "gh_data" in st.session_state and "gh_audit" in st.session_state:
     # TAB 4: AI Recruiter Coach & Resume Bullets
     # ──────────────────────────────────────────────────────────────────────────
     with tabs[3]:
-        st.markdown("### 🧠 AI Recruiter Assessment & Resume Bullet Generator")
+        st.markdown("### AI Recruiter Assessment & Resume Bullet Generator")
         st.caption("Converts GitHub projects directly into quantified Google XYZ resume bullet points.")
 
         ai_key_to_use = gemini_key_input.strip() if gemini_key_input else None
 
         # Button to generate / refresh critique
         if st.session_state.get("gh_ai_critique") is None:
-            if st.button("✨ Generate AI Recruiter Critique & Resume Bullets", type="primary"):
+            if st.button("Generate AI Recruiter Critique & Resume Bullets", type="primary"):
                 with st.spinner("Analyzing portfolio repositories with AI Recruiter Engine..."):
                     critique = generate_ai_critique(gh_data, audit, api_key=ai_key_to_use)
                     st.session_state["gh_ai_critique"] = critique
@@ -534,40 +576,40 @@ if "gh_data" in st.session_state and "gh_audit" in st.session_state:
 
         critique = st.session_state.get("gh_ai_critique")
         if critique:
-            gen_tag = "🤖 Generated via Google Gemini AI" if critique.get("is_ai_generated") else "⚡ Generated via Built-in Rule Engine (Offline)"
+            gen_tag = "🤖 Generated via Google Gemini AI" if critique.get("is_ai_generated") else "Generated via Built-in Rule Engine (Offline)"
             st.caption(f"*{gen_tag}*")
 
-            st.markdown("#### 🎯 Executive Recruiter Summary")
-            st.info(critique.get("executive_summary", ""), icon="📌")
+            st.markdown("#### Executive Recruiter Summary")
+            st.info(critique.get("executive_summary", ""), icon="")
 
             st.markdown("<br>", unsafe_allow_html=True)
-            st.markdown("#### 🎙️ 30-Second Interview Elevator Pitch")
+            st.markdown("#### 30-Second Interview Elevator Pitch")
             st.caption("Use this script when interviewers ask: *'Walk me through your background and projects'*")
             pitch_text = critique.get("elevator_pitch", "")
             st.code(pitch_text, language="text")
 
             st.markdown("<br>", unsafe_allow_html=True)
-            st.markdown("#### 📄 Ready-to-Use XYZ Resume Bullet Points")
+            st.markdown("#### Ready-to-Use XYZ Resume Bullet Points")
             st.caption("Quantified bullet points based on your GitHub projects formatted for engineering resumes.")
             
             for b in critique.get("resume_bullets", []):
                 st.markdown(f"""
 <div class="bullet-box">
     <div style="font-weight: 700; color: #a855f7; margin-bottom: 0.4rem;">
-        📦 {b.get('repo_name')} &nbsp;<span style="color:#8b949e; font-size:0.85rem;">({b.get('language')})</span>
+        {b.get('repo_name')} &nbsp;<span style="color:#8b949e; font-size:0.85rem;">({b.get('language')})</span>
     </div>
     <div style="color: #f0f6fc; font-size: 0.95rem; line-height: 1.6; margin-bottom: 0.6rem;">
         • {b.get('bullet_xyz')}
     </div>
     <div style="color: #94a3b8; font-size: 0.85rem;">
-        💡 <em>Interview Tip:</em> {b.get('recruiter_tip')}
+        <em>Interview Tip:</em> {b.get('recruiter_tip')}
     </div>
 </div>
 """, unsafe_allow_html=True)
 
             st.markdown("<br>", unsafe_allow_html=True)
-            st.markdown("#### 🚀 Recommended Capstone Project to Build Next")
-            st.success(f"**Strategic Recommendation:** {critique.get('capstone_recommendation', '')}", icon="🏆")
+            st.markdown("#### Recommended Capstone Project to Build Next")
+            st.success(f"**Strategic Recommendation:** {critique.get('capstone_recommendation', '')}", icon="")
 
             if critique.get("interview_talking_points"):
                 st.markdown("<br>", unsafe_allow_html=True)
@@ -579,27 +621,41 @@ if "gh_data" in st.session_state and "gh_audit" in st.session_state:
     # TAB 5: Export Markdown Audit Report
     # ──────────────────────────────────────────────────────────────────────────
     with tabs[4]:
-        st.markdown("### 📥 Download Portfolio Audit Report")
-        st.caption("Export your complete GitHub audit results as a portable Markdown file.")
+        st.markdown("### Download Portfolio Audit Report")
+        st.caption("Export your complete GitHub audit results as a professionally styled PDF.")
 
-        report_md = generate_markdown_report(gh_data, audit)
-        
-        st.download_button(
-            label="⬇️ Download Audit Report (.md)",
-            data=report_md,
-            file_name=f"DevPilot_GitHub_Audit_{profile.get('login', 'report')}.md",
-            mime="text/markdown",
-            type="primary",
-        )
+        with st.spinner("Generating PDF report..."):
+            try:
+                pdf_bytes = generate_github_pdf(gh_data, audit)
+                st.download_button(
+                    label="Download Audit Report (.pdf)",
+                    data=pdf_bytes,
+                    file_name=f"DevPilot_GitHub_Audit_{profile.get('login', 'report')}.pdf",
+                    mime="application/pdf",
+                    type="primary",
+                    use_container_width=True,
+                )
+            except Exception as pdf_err:
+                st.warning(f"PDF generation failed ({pdf_err}). Falling back to Markdown.")
+                report_md = generate_markdown_report(gh_data, audit)
+                st.download_button(
+                    label="⬇️ Download Audit Report (.md)",
+                    data=report_md,
+                    file_name=f"DevPilot_GitHub_Audit_{profile.get('login', 'report')}.md",
+                    mime="text/markdown",
+                    type="primary",
+                    use_container_width=True,
+                )
 
-        with st.expander("📄 Preview Markdown Report", expanded=True):
-            st.markdown(report_md)
+        with st.expander("Preview Report Content", expanded=False):
+            report_md_preview = generate_markdown_report(gh_data, audit)
+            st.markdown(report_md_preview)
 
 else:
     # Empty State Guide
     st.markdown("""
 <div style="background: #161b22; border: 1px dashed #30363d; border-radius: 12px; padding: 2.5rem; text-align: center; color: #8b949e; margin-top: 1rem;">
-    <div style="font-size: 3rem; margin-bottom: 0.8rem;">🐙</div>
+    <div style="font-size: 3rem; margin-bottom: 0.8rem;"></div>
     <h3 style="color: #f0f6fc; margin-bottom: 0.5rem;">Ready to Audit Your GitHub Presence</h3>
     <p style="max-width: 550px; margin: 0 auto 1.5rem auto; line-height: 1.6;">
         Enter any public GitHub username above to calculate your Developer Portfolio Readiness Score (0–100), audit repository documentation, and generate recruiter-ready resume bullet points.

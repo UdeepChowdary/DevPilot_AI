@@ -63,6 +63,24 @@ TECH_SKILLS = {
     "algorithms", "object-oriented programming", "oop", "clean architecture",
 }
 
+# Precompile all skill patterns at module load time for O(1) lookup per call
+_SKILL_PATTERNS: list[tuple[str, re.Pattern]] = []
+for _skill in TECH_SKILLS:
+    if " " in _skill or "." in _skill or "+" in _skill or "#" in _skill:
+        _SKILL_PATTERNS.append(
+            (_skill, re.compile(
+                rf"(?:^|[\s,;/\(\)\[\]]){re.escape(_skill)}(?:$|[\s,;/\(\)\[\]])",
+                re.IGNORECASE,
+            ))
+        )
+    else:
+        _SKILL_PATTERNS.append(
+            (_skill, re.compile(rf"\b{re.escape(_skill)}\b", re.IGNORECASE))
+        )
+
+# Module-level Rake singleton to avoid re-initializing on every call
+_rake_instance = Rake(min_length=1, max_length=3)
+
 
 def _clean_token(term: str) -> str:
     """Normalize term for comparison."""
@@ -70,16 +88,14 @@ def _clean_token(term: str) -> str:
 
 
 def _rake_keywords(text: str, max_keywords: int = 25) -> list[str]:
-    """Extract top phrases using RAKE algorithm."""
-    r = Rake(min_length=1, max_length=3)
-    r.extract_keywords_from_text(text)
-    ranked = r.get_ranked_phrases()
+    """Extract top phrases using RAKE algorithm (uses module-level singleton)."""
+    _rake_instance.extract_keywords_from_text(text)
+    ranked = _rake_instance.get_ranked_phrases()
     cleaned = []
     for phrase in ranked:
         norm = _clean_token(phrase)
         if norm.isdigit():
             continue
-        # Preserve whitelisted short acronyms or standard-length phrases
         if norm in SHORT_TECH_WHITELIST or len(norm) > 2:
             cleaned.append(norm)
         if len(cleaned) >= max_keywords:
@@ -100,18 +116,14 @@ def _spacy_entities(text: str) -> list[str]:
 
 
 def _tech_skills_in_text(text: str) -> list[str]:
-    """Find known tech skills mentioned in the text with precise boundary matching."""
-    text_lower = text.lower()
+    """
+    Find known tech skills mentioned in the text using precompiled patterns.
+    O(n) where n = number of skills — patterns are compiled at module load time.
+    """
     found = []
-    for skill in TECH_SKILLS:
-        if " " in skill or "." in skill or "+" in skill or "#" in skill:
-            # Substring or escaped boundary search
-            pattern = rf"(?:^|[\s,;/\(\)\[\]]){re.escape(skill)}(?:$|[\s,;/\(\)\[\]])"
-            if re.search(pattern, text_lower):
-                found.append(skill)
-        else:
-            if re.search(rf"\b{re.escape(skill)}\b", text_lower):
-                found.append(skill)
+    for skill, pattern in _SKILL_PATTERNS:
+        if pattern.search(text):
+            found.append(skill)
     return found
 
 
@@ -161,7 +173,6 @@ def compare_keywords(resume_text: str, jd_text: str) -> dict:
     missing = []
 
     for kw in jd_kws:
-        # Check either exact keyword in resume_kws or boundary-aware search in text
         if kw in resume_kws:
             matched.append(kw)
         elif len(kw) <= 3 and kw in SHORT_TECH_WHITELIST:
@@ -182,7 +193,8 @@ def compare_keywords(resume_text: str, jd_text: str) -> dict:
 
     matched = sorted(list(set(matched)))
     missing = sorted(list(set(missing)))
-    resume_only = sorted(list(resume_kws - set(matched)))
+    # resume_only = keywords in resume but not matched with JD
+    resume_only = sorted(list(resume_kws - set(matched) - set(missing)))
 
     total_jd = max(len(jd_kws), 1)
     match_rate = round(len(matched) / total_jd, 2)

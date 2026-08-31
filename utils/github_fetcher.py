@@ -2,15 +2,39 @@
 🐙 GitHub Fetcher Utility — DevPilot AI
 Fetches GitHub user profiles, repositories, language statistics, and repo health metrics
 using GitHub REST API v3 with optional Personal Access Token (PAT) support.
+Includes retry logic for transient errors and pagination for users with 100+ repos.
 """
 
-from typing import Dict, List, Any, Optional
-import requests
-import base64
+import logging
 import os
-from datetime import datetime
+from typing import Dict, List, Any, Optional
+
+import requests
+from requests.adapters import HTTPAdapter
+from urllib3.util.retry import Retry
+
+logger = logging.getLogger(__name__)
 
 GITHUB_API_BASE = "https://api.github.com"
+
+
+def _build_session() -> requests.Session:
+    """Build a requests.Session with exponential backoff retry on transient errors."""
+    session = requests.Session()
+    retry = Retry(
+        total=3,
+        backoff_factor=0.5,          # 0.5s, 1s, 2s between retries
+        status_forcelist=[500, 502, 503, 504],
+        allowed_methods=["GET"],
+        raise_on_status=False,
+    )
+    adapter = HTTPAdapter(max_retries=retry)
+    session.mount("https://", adapter)
+    session.mount("http://", adapter)
+    return session
+
+
+_session = _build_session()
 
 
 def _get_headers(token: Optional[str] = None) -> Dict[str, str]:
@@ -36,11 +60,10 @@ def get_user_profile(username: str, token: Optional[str] = None) -> Dict[str, An
         raise ValueError("GitHub username cannot be empty.")
 
     url = f"{GITHUB_API_BASE}/users/{clean_username}"
-    response = requests.get(url, headers=_get_headers(token), timeout=12)
+    response = _session.get(url, headers=_get_headers(token), timeout=12)
 
-    # Check rate limit info
     rate_limit_remaining = response.headers.get("X-RateLimit-Remaining")
-    
+
     if response.status_code == 200:
         data = response.json()
         data["_rate_limit_remaining"] = rate_limit_remaining
@@ -53,36 +76,56 @@ def get_user_profile(username: str, token: Optional[str] = None) -> Dict[str, An
             "in the sidebar to unlock 5,000 requests/hour."
         )
     else:
-        raise RuntimeError(f"GitHub API returned error ({response.status_code}): {response.text}")
+        raise RuntimeError(f"GitHub API returned error ({response.status_code}): {response.text[:200]}")
 
 
 def get_user_repos(
     username: str,
     token: Optional[str] = None,
-    max_repos: int = 100,
+    max_repos: int = 200,
 ) -> List[Dict[str, Any]]:
     """
     Fetch public repositories for a given GitHub user (sorted by most recently updated).
+    Paginates through all pages to support users with more than 100 repositories.
     """
     clean_username = username.strip()
-    url = f"{GITHUB_API_BASE}/users/{clean_username}/repos"
-    params = {
-        "per_page": min(max_repos, 100),
-        "sort": "updated",
-        "direction": "desc",
-        "type": "all",
-    }
-    
-    response = requests.get(url, headers=_get_headers(token), params=params, timeout=15)
-    
-    if response.status_code == 200:
-        return response.json()
-    elif response.status_code == 404:
-        return []
-    elif response.status_code == 403:
-        raise PermissionError("GitHub API rate limit exceeded while fetching repositories.")
-    else:
-        raise RuntimeError(f"Failed to fetch repositories ({response.status_code}).")
+    all_repos: List[Dict[str, Any]] = []
+    page = 1
+    per_page = 100
+
+    while len(all_repos) < max_repos:
+        url = f"{GITHUB_API_BASE}/users/{clean_username}/repos"
+        params = {
+            "per_page": per_page,
+            "page": page,
+            "sort": "updated",
+            "direction": "desc",
+            "type": "all",
+        }
+
+        try:
+            response = _session.get(url, headers=_get_headers(token), params=params, timeout=15)
+        except requests.RequestException as e:
+            logger.error("Network error fetching repos for %s: %s", clean_username, e)
+            break
+
+        if response.status_code == 200:
+            batch = response.json()
+            if not batch:
+                break  # No more pages
+            all_repos.extend(batch)
+            if len(batch) < per_page:
+                break  # Last page
+            page += 1
+        elif response.status_code == 404:
+            return []
+        elif response.status_code == 403:
+            raise PermissionError("GitHub API rate limit exceeded while fetching repositories.")
+        else:
+            logger.error("Failed to fetch repos page %d (%d): %s", page, response.status_code, response.text[:200])
+            break
+
+    return all_repos[:max_repos]
 
 
 def get_repo_languages(
@@ -92,14 +135,19 @@ def get_repo_languages(
 ) -> Dict[str, int]:
     """
     Fetch byte breakdown of programming languages for a specific repository.
+    Returns empty dict on failure with a log message (does not silently swallow all errors).
     """
     url = f"{GITHUB_API_BASE}/repos/{owner}/{repo_name}/languages"
     try:
-        response = requests.get(url, headers=_get_headers(token), timeout=8)
+        response = _session.get(url, headers=_get_headers(token), timeout=8)
         if response.status_code == 200:
             return response.json()
-    except Exception:
-        pass
+        elif response.status_code == 403:
+            logger.warning("Rate limit hit while fetching languages for %s/%s", owner, repo_name)
+        elif response.status_code != 404:
+            logger.warning("Unexpected status %d for languages of %s/%s", response.status_code, owner, repo_name)
+    except requests.RequestException as e:
+        logger.warning("Network error fetching languages for %s/%s: %s", owner, repo_name, e)
     return {}
 
 
@@ -115,14 +163,14 @@ def get_repo_readme_preview(
     url = f"{GITHUB_API_BASE}/repos/{owner}/{repo_name}/readme"
     headers = _get_headers(token)
     headers["Accept"] = "application/vnd.github.v3.raw"
-    
+
     try:
-        response = requests.get(url, headers=headers, timeout=8)
+        response = _session.get(url, headers=headers, timeout=8)
         if response.status_code == 200:
             content = response.text
             return content[:max_length] if len(content) > max_length else content
-    except Exception:
-        pass
+    except requests.RequestException as e:
+        logger.warning("Could not fetch README for %s/%s: %s", owner, repo_name, e)
     return None
 
 

@@ -9,6 +9,8 @@ import re
 import os
 import json
 
+from utils.constants import ACTION_VERBS  # used to detect already-strong bullets
+
 # ─── Verb substitution table ──────────────────────────────────────────────────
 VERB_SUBSTITUTIONS = {
     "was responsible for": "Owned",
@@ -40,19 +42,27 @@ VERB_SUBSTITUTIONS = {
     "handled":             "Managed",
     "fixed":               "Resolved",
     "wrote":               "Authored",
-    "built":               "Engineered",
-    "created":             "Architected",
     "updated":             "Modernized",
-    "improved":            "Optimized",
     "tested":              "Validated",
     "set up":              "Configured",
     "looked after":        "Maintained",
+    # NOTE: "built", "created", "improved" are intentionally NOT here — they are
+    # already strong action verbs and should NOT be replaced by rule-based mode.
 }
 
 WEAK_VERB_RE = re.compile(
     r"^(" + "|".join(re.escape(v) for v in sorted(VERB_SUBSTITUTIONS, key=len, reverse=True)) + r")\b",
     re.IGNORECASE,
 )
+
+
+def _is_already_strong(bullet: str) -> bool:
+    """Return True if the bullet already starts with a strong action verb."""
+    first_word = re.split(r"[\s\W]+", bullet.strip())[0].lower()
+    return first_word in ACTION_VERBS and first_word not in {
+        "helped", "assisted", "worked", "used", "tried", "supported",
+        "handled", "got", "had", "made", "did", "was",
+    }
 
 
 def _has_metric(text: str) -> bool:
@@ -63,9 +73,9 @@ def _has_metric(text: str) -> bool:
         r"\b\d+[\.,]?\d*\s*[xX]\b",                              # 3x, 2X
         r"\b\d+[\.,]?\d*\s*(?:k|m|million|billion)\b",           # 10k, 5M, 2 million
         r"\b\d+\s*\+",                                           # 100+, 5k+
-        r"\b\d+[\.,]?\d*\s*(?:ms|sec|seconds|minutes|hours|days|fps|qps|rps)\b", # 500ms, 2 seconds
-        r"\b\d+[\.,]?\d*\s*(?:users|clients|customers|requests|events|queries|tickets|nodes|services|endpoints|repos)\b", # 10k users
-        r"(?:reduced|increased|boosted|improved|saved|scaled|decreased|cut)\s+(?:by|to)?\s*\d+", # reduced by 40
+        r"\b\d+[\.,]?\d*\s*(?:ms|sec|seconds|minutes|hours|days|fps|qps|rps)\b",
+        r"\b\d+[\.,]?\d*\s*(?:users|clients|customers|requests|events|queries|tickets|nodes|services|endpoints|repos)\b",
+        r"(?:reduced|increased|boosted|improved|saved|scaled|decreased|cut)\s+(?:by|to)?\s*\d+",
     ]
     return any(re.search(p, text, re.IGNORECASE) for p in patterns)
 
@@ -74,6 +84,7 @@ def _rule_based_enhance(bullet: str) -> tuple[str, str]:
     """
     Apply rule-based improvements to a single bullet point.
     Returns (enhanced_text, explanation).
+    Skips replacement if the bullet already starts with a strong action verb.
     """
     bullet = bullet.strip()
     enhanced = bullet
@@ -81,14 +92,22 @@ def _rule_based_enhance(bullet: str) -> tuple[str, str]:
     weak_found = ""
     strong_applied = ""
 
+    # Skip bullets that already start with a strong verb — don't regress them
+    if _is_already_strong(bullet):
+        # Still ensure capitalization and trailing period
+        if enhanced and not enhanced[0].isupper():
+            enhanced = enhanced[0].upper() + enhanced[1:]
+        if not enhanced.endswith("."):
+            enhanced = enhanced + "."
+        return enhanced, "Strong verb already present — preserved"
+
     # Replace weak verb at the start
     match = WEAK_VERB_RE.match(bullet)
     if match:
         weak = match.group(1)
         strong = VERB_SUBSTITUTIONS.get(weak.lower(), "Spearheaded")
-        # Ensure capitalization and splice cleanly
         suffix = bullet[len(weak):]
-        # Clean potential grammatical leftover: "to build" -> "building" or strip "to"
+        # Clean potential grammatical leftover: "to build" -> strip "to"
         if suffix.startswith(" to "):
             suffix = suffix[4:]
         enhanced = strong + suffix
@@ -100,12 +119,12 @@ def _rule_based_enhance(bullet: str) -> tuple[str, str]:
     if enhanced and not enhanced[0].isupper():
         enhanced = enhanced[0].upper() + enhanced[1:]
 
-    # Remove trailing period inconsistencies
+    # Ensure trailing period
     if not enhanced.endswith("."):
         enhanced = enhanced + "."
 
     if action_changed:
-        explanation = f"Upgraded action verb ('{weak_found}' -> '{strong_applied}')"
+        explanation = f"Upgraded action verb ('{weak_found}' → '{strong_applied}')"
     else:
         explanation = "Action verb preserved"
 
@@ -118,6 +137,8 @@ def _gemini_enhance_batch(bullets: list[str]) -> dict[str, str]:
     """
     Batch enhance bullets using Gemini AI adhering to Google's XYZ formula:
     'Accomplished [X] as measured by [Y], by doing [Z]'
+    Returns a dict mapping original bullet -> enhanced bullet.
+    Returns {} on any failure so callers can fall back to rule-based mode.
     """
     try:
         from utils.gemini_client import ask_json
@@ -179,6 +200,7 @@ def _t5_enhance(bullet: str) -> str:
 def enhance_bullets(
     bullets: list[str],
     mode: str = "rule_based",  # "rule_based", "gemini", or "t5"
+    max_bullets: int = 20,
 ) -> list[dict]:
     """
     Enhance a list of resume bullet points.
@@ -186,20 +208,19 @@ def enhance_bullets(
     Args:
         bullets: List of raw bullet point strings.
         mode: "rule_based", "gemini", or "t5".
+        max_bullets: Maximum number of bullets to process (default 20).
 
     Returns:
         List of dicts with original, enhanced, ai_suggestion, has_metric, and explanation.
     """
     results = []
     gemini_map = {}
+    valid_bullets = [b for b in bullets if b.strip()][:max_bullets]
 
     if mode == "gemini":
-        gemini_map = _gemini_enhance_batch([b for b in bullets if b.strip()])
+        gemini_map = _gemini_enhance_batch(valid_bullets)
 
-    for bullet in bullets:
-        if not bullet.strip():
-            continue
-
+    for bullet in valid_bullets:
         rule_enhanced, explanation = _rule_based_enhance(bullet)
         ai_suggestion = None
 

@@ -173,8 +173,8 @@ def score_repo_quality(
     else:
         improvements.append("Add GitHub repository topics/tags to highlight your tech stacks at a glance.")
 
-    # 6. Repository-level health audits
-    for r in original_repos[:10]:
+    # 6. Repository-level health audits (up to 20 repos for broader coverage)
+    for r in original_repos[:20]:
         has_desc = bool(r.get("description") and len(r["description"].strip()) >= 10)
         has_lic = bool(r.get("license"))
         has_demo = bool(r.get("homepage") and r["homepage"].strip().startswith("http"))
@@ -218,9 +218,13 @@ def score_repo_quality(
             "pushed_at": r.get("pushed_at"),
         })
 
-    # README check points (3 pts)
-    # Give full points if top repos have descriptions and hygiene
-    score += 3.0
+    # README / documentation bonus (up to 3 pts)
+    # Only awarded when a meaningful portion of repos have substantial descriptions
+    if total_orig > 0 and desc_ratio >= 0.5:
+        score += 3.0
+    elif total_orig > 0 and desc_ratio >= 0.25:
+        score += 1.5
+    # else 0 — no free points for bare repositories
 
     return min(score, 35.0), strengths, improvements, repo_audits
 
@@ -248,7 +252,7 @@ def score_activity_consistency(
                 most_recent_push = dt
 
     if most_recent_push:
-        days_since_push = (now - most_recent_push).days
+        days_since_push = max(0, (now - most_recent_push).days)
         if days_since_push <= 14:
             score += 12.0
             strengths.append("High recent activity: Active pushes detected within the last 14 days.")

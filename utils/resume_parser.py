@@ -13,6 +13,8 @@ try:
 except ImportError:
     DOCX_AVAILABLE = False
 
+from utils.constants import ACTION_VERBS  # Single source of truth
+
 
 # Comprehensive section header patterns
 SECTION_PATTERNS = {
@@ -55,11 +57,9 @@ def extract_text_from_pdf(file_bytes: bytes) -> str:
     doc = fitz.open(stream=file_bytes, filetype="pdf")
     pages_text = []
     for page in doc:
-        # Extract sorted text blocks to prevent interleaving 2-column layouts
         blocks = page.get_text("blocks", sort=True)
         page_lines = []
         for block in blocks:
-            # block[4] contains the text
             block_text = block[4].strip()
             if block_text:
                 page_lines.append(block_text)
@@ -129,6 +129,8 @@ def detect_sections(text: str) -> dict[str, str]:
     for line in lines:
         stripped = line.strip()
         if not stripped:
+            # Preserve blank lines so section content retains paragraph spacing
+            sections.setdefault(current_section, []).append("")
             continue
 
         # Clean punctuation from potential headers (e.g., "EXPERIENCE:" or "### Skills")
@@ -148,27 +150,8 @@ def detect_sections(text: str) -> dict[str, str]:
         if not matched:
             sections.setdefault(current_section, []).append(line)
 
-    # Join each section's lines back into a string
-    return {k: "\n".join(v).strip() for k, v in sections.items() if v}
-
-
-ACTION_LEAD_VERBS = {
-    "achieved", "accelerated", "architected", "automated", "built", "championed", "constructed",
-    "created", "decreased", "delivered", "deployed", "designed", "developed", "directed",
-    "drove", "enhanced", "engineered", "established", "executed", "formulated", "generated",
-    "grew", "implemented", "improved", "increased", "initiated", "integrated", "launched",
-    "led", "managed", "mentored", "migrated", "modernized", "optimized", "orchestrated",
-    "oversaw", "pioneered", "produced", "programmed", "reduced", "refactored", "resolved",
-    "revamped", "scaled", "spearheaded", "standardized", "streamlined", "transformed",
-    "achieve", "accelerate", "architect", "automate", "build", "champion", "construct",
-    "create", "decrease", "deliver", "deploy", "design", "develop", "direct",
-    "drive", "enhance", "engineer", "establish", "execute", "generate",
-    "grow", "implement", "improve", "increase", "initiate", "integrate", "launch",
-    "lead", "manage", "mentor", "migrate", "modernize", "optimize", "orchestrate",
-    "oversee", "pioneer", "produce", "program", "reduce", "refactor", "resolve",
-    "scale", "spearhead", "streamline", "transform", "helped", "assisted", "worked",
-    "supported", "collaborated", "authored", "facilitated", "piloted", "conducted",
-}
+    # Join each section's lines back into a string, strip leading/trailing whitespace
+    return {k: "\n".join(v).strip() for k, v in sections.items() if any(l.strip() for l in v)}
 
 
 def extract_bullet_points(text: str) -> list[str]:
@@ -195,7 +178,7 @@ def extract_bullet_points(text: str) -> list[str]:
 
     for line in lines:
         stripped = line.strip()
-        if not stripped or len(stripped) < 15:
+        if not stripped or len(stripped) < 12:  # lowered from 15 to catch short but valid bullets
             continue
 
         # Ignore lines that are clearly headings, contact info, or colon skill labels
@@ -211,14 +194,14 @@ def extract_bullet_points(text: str) -> list[str]:
         match_sym = bullet_symbol_re.match(stripped)
         if match_sym:
             b_text = match_sym.group(1).strip()
-            if len(b_text) >= 15:
+            if len(b_text) >= 12:
                 extracted_bullets.append(b_text)
             continue
 
         match_num = numbered_bullet_re.match(stripped)
         if match_num:
             b_text = match_num.group(1).strip()
-            if len(b_text) >= 15:
+            if len(b_text) >= 12:
                 extracted_bullets.append(b_text)
             continue
 
@@ -230,10 +213,9 @@ def extract_bullet_points(text: str) -> list[str]:
 
         # Check if the first word is a recognized action verb
         first_word = re.split(r"[\s\W]+", stripped)[0].lower()
-        if first_word in ACTION_LEAD_VERBS and len(stripped) >= 25:
+        if first_word in ACTION_VERBS and len(stripped) >= 20:
             extracted_bullets.append(stripped)
 
     # Deduplicate while preserving order
     deduped = list(dict.fromkeys(extracted_bullets))
-    return [b for b in deduped if len(b) >= 15]
-
+    return [b for b in deduped if len(b) >= 12]
