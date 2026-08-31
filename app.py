@@ -129,6 +129,9 @@ st.markdown("""
     margin-bottom: 0.8rem;
     transition: all 0.25s ease-in-out;
     cursor: default;
+    height: 260px;
+    display: flex;
+    flex-direction: column;
 }
 .module-card:hover {
     border-color: rgba(99,102,241,0.55);
@@ -140,7 +143,7 @@ st.markdown("""
 }
 .module-icon { font-size: 2.2rem; margin-bottom: 0.6rem; }
 .module-title { font-size: 1.1rem; font-weight: 700; color: white; margin-bottom: 0.4rem; }
-.module-desc  { font-size: 0.86rem; color: #94a3b8; line-height: 1.55; min-height: 52px; }
+.module-desc  { font-size: 0.86rem; color: #94a3b8; line-height: 1.55; flex-grow: 1; }
 .module-status-live {
     display: inline-block;
     background: rgba(34,197,94,0.15);
@@ -287,21 +290,21 @@ st.markdown("### Modules")
 
 modules = [
     {
-        "icon": "",
+        "icon": "📄",
         "title": "Resume Analyzer",
         "desc": "ATS scoring with TF-IDF, keyword matching via RAKE + spaCy, section validator, and Google XYZ bullet rewriter.",
         "status": "live",
         "page": "pages/1_Resume_Analyzer.py",
     },
     {
-        "icon": "",
+        "icon": "🐙",
         "title": "GitHub Profile Analyzer",
         "desc": "Portfolio readiness scoring (0–100), repository hygiene audit, language breakdown, and AI resume bullets.",
         "status": "live",
         "page": "pages/2_GitHub_Analyzer.py",
     },
     {
-        "icon": "",
+        "icon": "💻",
         "title": "AI Code Reviewer",
         "desc": "Detect bugs, code smells, calculate time/space complexity, and generate refactoring suggestions.",
         "status": "soon",
@@ -313,13 +316,13 @@ modules = [
         "status": "soon",
     },
     {
-        "icon": "",
+        "icon": "🎯",
         "title": "LeetCode Coach",
         "desc": "Track coding progress, identify weak algorithmic topics, and generate targeted practice plans.",
         "status": "soon",
     },
     {
-        "icon": "",
+        "icon": "📊",
         "title": "Placement Readiness Dashboard",
         "desc": "Track overall preparation, calculate readiness score, and manage interview milestones.",
         "status": "soon",
