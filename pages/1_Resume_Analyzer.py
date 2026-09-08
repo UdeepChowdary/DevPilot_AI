@@ -8,6 +8,7 @@ import plotly.graph_objects as go
 import plotly.express as px
 import sys
 import os
+import html
 
 # Ensure utils is importable from the pages/ directory
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
@@ -17,6 +18,7 @@ from utils.ats_scorer import score_resume
 from utils.keyword_extractor import extract_keywords, compare_keywords
 from utils.bullet_enhancer import enhance_bullets
 from utils.pdf_generator import generate_resume_pdf
+from utils.sidebar import render_sidebar
 
 # ─── Page Config ──────────────────────────────────────────────────────────────
 st.set_page_config(
@@ -24,6 +26,9 @@ st.set_page_config(
     page_icon="📄",
     layout="wide",
 )
+
+# ─── Sidebar ──────────────────────────────────────────────────────────────────
+render_sidebar()
 
 # ─── Custom CSS ───────────────────────────────────────────────────────────────
 st.markdown("""
@@ -33,14 +38,14 @@ st.markdown("""
 * { font-family: 'Inter', sans-serif; }
 
 .hero {
-    background: linear-gradient(135deg, #0f0c29, #302b63, #24243e);
+    background: linear-gradient(135deg, #ffffff 0%, #cbd5e1 100%);
     border-radius: 16px;
     padding: 2.2rem;
     margin-bottom: 1.5rem;
-    color: white;
+    color: #0f172a;
     position: relative;
     overflow: hidden;
-    border: 1px solid rgba(99,102,241,0.25);
+    border: 1px solid #e2e8f0;
 }
 .hero::before {
     content: '';
@@ -49,7 +54,7 @@ st.markdown("""
     right: -5%;
     width: 300px;
     height: 300px;
-    background: radial-gradient(circle, rgba(99,102,241,0.15) 0%, transparent 70%);
+    background: radial-gradient(circle, rgba(99,102,241,0.08) 0%, transparent 70%);
     border-radius: 50%;
     pointer-events: none;
 }
@@ -260,14 +265,19 @@ with st.expander("⚙️ Enhancement Engine & AI Options"):
                 user_key = st.text_input(
                     "Enter Gemini API Key (optional if in .env):",
                     type="password",
+                    value=st.session_state.get("gemini_api_key", ""),
                     help="Used only for generating smart Google XYZ bullet rewrites.",
                 )
                 if user_key:
-                    os.environ["GEMINI_API_KEY"] = user_key
+                    st.session_state["gemini_api_key"] = user_key.strip()
             else:
                 st.success("GEMINI_API_KEY detected from environment.")
         elif enhancement_mode == "t5":
-            st.info("ℹ️ T5-small runs locally and downloads ~240MB weights on first execution.")
+            st.warning(
+                "⚠️ **T5 Local Model**: On first run, HuggingFace will download "
+                "**~240MB** of model weights. The app will appear busy — "
+                "a progress indicator will show during loading."
+            )
 
 # ─── Analyze Button ───────────────────────────────────────────────────────────
 analyze_clicked = st.button(
@@ -277,10 +287,10 @@ analyze_clicked = st.button(
     disabled=(uploaded_file is None),
 )
 
-if uploaded_file is None:
+if uploaded_file is None and "resume_results" not in st.session_state:
     st.markdown("""
 <div class="empty-state">
-    <div class="es-icon"></div>
+    <div class="es-icon">📄</div>
     <div class="es-title">No resume uploaded yet</div>
     <div class="es-sub">Upload your resume above (PDF, DOCX, or TXT) to get your ATS score, keyword analysis, and bullet improvements.</div>
 </div>
@@ -291,6 +301,11 @@ if uploaded_file is None:
 if analyze_clicked or "resume_results" in st.session_state:
 
     if analyze_clicked:
+        # File size defense (5 MB ceiling)
+        if uploaded_file.size > 5 * 1024 * 1024:
+            st.error("File size exceeds 5 MB limit. Please upload a smaller document.")
+            st.stop()
+
         # Staged progress messages for better UX
         progress_bar = st.progress(0, text="🔬 Starting analysis...")
         try:
@@ -321,7 +336,25 @@ if analyze_clicked or "resume_results" in st.session_state:
 
             progress_bar.progress(80, text="Enhancing bullet points...")
             bullets = extract_bullet_points(resume_text)
-            bullet_results = enhance_bullets(bullets[:15], mode=enhancement_mode)
+            gemini_key = st.session_state.get("gemini_api_key")
+
+            if enhancement_mode == "t5":
+                # T5 may trigger a ~240MB model download on first run.
+                # Wrap in st.status so the user sees progress instead of a frozen screen.
+                with st.status(
+                    "⏳ Loading T5 neural model (first run downloads ~240MB)…",
+                    expanded=True,
+                ) as _t5_status:
+                    st.write("Downloading `t5-small` from HuggingFace Hub…")
+                    st.write("This is a one-time download. Subsequent runs are instant.")
+                    bullet_results = enhance_bullets(bullets[:15], mode="t5", api_key=gemini_key)
+                    _t5_status.update(
+                        label="✅ T5 model loaded and bullets enhanced!",
+                        state="complete",
+                        expanded=False,
+                    )
+            else:
+                bullet_results = enhance_bullets(bullets[:15], mode=enhancement_mode, api_key=gemini_key)
 
             progress_bar.progress(100, text="Analysis complete!")
 
@@ -486,7 +519,7 @@ if analyze_clicked or "resume_results" in st.session_state:
             with col_m:
                 st.markdown(f"### Matched Keywords ({len(kw['matched'])})")
                 if kw["matched"]:
-                    chips = "".join(f"<span class='kw-chip-match'>{k}</span>" for k in kw["matched"])
+                    chips = "".join(f"<span class='kw-chip-match'>{html.escape(k)}</span>" for k in kw["matched"])
                     st.markdown(f"<div style='line-height:2.2;'>{chips}</div>", unsafe_allow_html=True)
                 else:
                     st.warning("No direct keyword matches found. Ensure skills match JD terminology.")
@@ -494,7 +527,7 @@ if analyze_clicked or "resume_results" in st.session_state:
             with col_mi:
                 st.markdown(f"### Missing Keywords from JD ({len(kw['missing'])})")
                 if kw["missing"]:
-                    chips = "".join(f"<span class='kw-chip-miss'>{k}</span>" for k in kw["missing"])
+                    chips = "".join(f"<span class='kw-chip-miss'>{html.escape(k)}</span>" for k in kw["missing"])
                     st.markdown(f"<div style='line-height:2.2;'>{chips}</div>", unsafe_allow_html=True)
                     st.caption("Tip: Integrate relevant missing keywords naturally into your experience & project bullets.")
                 else:
@@ -520,7 +553,7 @@ if analyze_clicked or "resume_results" in st.session_state:
         else:
             st.markdown("### Extracted Resume Keywords")
             st.caption("No Job Description was provided. Displaying key skills and technologies identified in your resume:")
-            chips = "".join(f"<span class='kw-chip-neutral'>{k}</span>" for k in kw["resume_keywords"])
+            chips = "".join(f"<span class='kw-chip-neutral'>{html.escape(k)}</span>" for k in kw["resume_keywords"])
             st.markdown(f"<div style='line-height:2.2;'>{chips}</div>", unsafe_allow_html=True)
             st.info("Paste a target job description in the upload area to see matched vs. missing skills.")
 
@@ -547,17 +580,19 @@ if analyze_clicked or "resume_results" in st.session_state:
                     else "<span class='no-metric-tag'>Add metric (%, ms, $)</span>"
                 )
                 ai_tag_html = "<span class='ai-tag'>Gemini AI</span>" if item.get("ai_suggestion") else ""
-                explanation_tag = f"<span class='bullet-tag'>{item['explanation']}</span>"
+                explanation_tag = f"<span class='bullet-tag'>{html.escape(str(item['explanation']))}</span>"
+                orig_esc = html.escape(str(item['original']))
+                enh_esc = html.escape(str(item['enhanced']))
 
                 st.markdown(f"""
 <div class="bullet-card">
     <div>
         <div class="bullet-col-label bullet-original-label">Original</div>
-        <div class="bullet-text-original">{item['original']}</div>
+        <div class="bullet-text-original">{orig_esc}</div>
     </div>
     <div>
         <div class="bullet-col-label bullet-enhanced-label">Enhanced</div>
-        <div class="bullet-text-enhanced">{item['enhanced']}</div>
+        <div class="bullet-text-enhanced">{enh_esc}</div>
     </div>
     <div class="bullet-tags">
         {explanation_tag} {metric_tag} {ai_tag_html}
@@ -608,18 +643,4 @@ if analyze_clicked or "resume_results" in st.session_state:
                 type="primary",
             )
         except Exception as pdf_err:
-            st.warning(f"PDF generation failed ({pdf_err}). Falling back to Markdown download.")
-            report_md = f"""# DevPilot AI — Resume ATS Audit Report
-**File:** {results.get('filename', 'Resume')}
-**Overall ATS Score:** {score}/100
-
-## Score Breakdown
-""" + "\n".join([f"- **{b['label']}:** {b['score']} / {b['max']}" for b in ats["breakdown"]])
-            st.download_button(
-                label="Download ATS Audit Report (.md)",
-                data=report_md,
-                file_name="resume_ats_audit_report.md",
-                mime="text/markdown",
-                use_container_width=True,
-                type="primary",
-            )
+            st.error(f"PDF generation failed: {pdf_err}")

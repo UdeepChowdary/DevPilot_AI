@@ -55,6 +55,9 @@ def extract_text_from_pdf(file_bytes: bytes) -> str:
     Sorts blocks topologically (top-to-bottom, left-to-right) for multi-column resumes.
     """
     doc = fitz.open(stream=file_bytes, filetype="pdf")
+    if len(doc) > 15:
+        doc.close()
+        raise ValueError("Resume exceeds maximum limit of 15 pages. Please upload a standard 1-3 page resume.")
     pages_text = []
     for page in doc:
         blocks = page.get_text("blocks", sort=True)
@@ -208,7 +211,7 @@ def extract_bullet_points(text: str) -> list[str]:
         # For un-prefixed lines: must NOT be a job title line with dates or company 'at'
         if date_range_re.search(stripped):
             continue
-        if re.search(r"\b(at|@)\s+[A-Z][A-Za-z0-9\s]+(\([0-9\s\-–—Present]+\))?$", stripped):
+        if re.search(r"\b(at|@)\s+[A-Z][\w\s]{1,60}(?:\([0-9\s\-–—Present]+\))?$", stripped):
             continue
 
         # Check if the first word is a recognized action verb

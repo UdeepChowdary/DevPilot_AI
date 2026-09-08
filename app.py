@@ -1,4 +1,7 @@
 import streamlit as st
+import sys, os
+sys.path.insert(0, os.path.dirname(__file__))
+from utils.sidebar import render_sidebar
 
 st.set_page_config(
     page_title="DevPilot AI — Engineering Dashboard",
@@ -191,62 +194,11 @@ st.markdown("""
     margin: 1.5rem 0;
 }
 
-/* ── Sidebar enhancements ──────────────────────────────────────── */
-section[data-testid="stSidebar"] {
-    background: linear-gradient(180deg, #0f0c29 0%, #1a1a2e 100%) !important;
-}
 </style>
 """, unsafe_allow_html=True)
 
 # ── Sidebar ───────────────────────────────────────────────────────────────────
-with st.sidebar:
-    st.markdown("""
-<div style="text-align:center; padding: 0.5rem 0 1.2rem 0;">
-    <div style="font-size:1.5rem; font-weight:800; color:white; margin-top:0.3rem;">DevPilot AI</div>
-    <div style="font-size:0.75rem; color:#6366f1; font-weight:600; letter-spacing:0.05em;">ENGINEERING DASHBOARD</div>
-</div>
-""", unsafe_allow_html=True)
-
-    st.markdown("**Navigation**")
-    st.page_link("app.py", label="Home", use_container_width=True)
-    st.page_link("pages/1_Resume_Analyzer.py", label="Resume Analyzer", use_container_width=True)
-    st.page_link("pages/2_GitHub_Analyzer.py", label="GitHub Profile Analyzer", use_container_width=True)
-
-    st.markdown("<div class='gradient-divider'></div>", unsafe_allow_html=True)
-
-    # Show session scores if analysis has been done
-    resume_score = st.session_state.get("resume_results", {}).get("ats", {}).get("total")
-    github_score = st.session_state.get("github_audit", {}).get("total_score")
-
-    if resume_score is not None or github_score is not None:
-        st.markdown("**Your Scores**")
-        if resume_score is not None:
-            color = "#22c55e" if resume_score >= 75 else "#eab308" if resume_score >= 50 else "#ef4444"
-            st.markdown(f"""
-<div style="background:rgba(99,102,241,0.08); border:1px solid rgba(99,102,241,0.2);
-     border-radius:10px; padding:0.75rem 1rem; margin-bottom:0.5rem;">
-    <div style="font-size:0.75rem; color:#94a3b8;">Resume ATS Score</div>
-    <div style="font-size:1.6rem; font-weight:800; color:{color};">{resume_score}<span style="font-size:0.9rem; color:#64748b;">/100</span></div>
-</div>
-""", unsafe_allow_html=True)
-        if github_score is not None:
-            color = "#22c55e" if github_score >= 70 else "#eab308" if github_score >= 50 else "#ef4444"
-            st.markdown(f"""
-<div style="background:rgba(99,102,241,0.08); border:1px solid rgba(99,102,241,0.2);
-     border-radius:10px; padding:0.75rem 1rem; margin-bottom:0.5rem;">
-    <div style="font-size:0.75rem; color:#94a3b8;">GitHub Portfolio Score</div>
-    <div style="font-size:1.6rem; font-weight:800; color:{color};">{github_score}<span style="font-size:0.9rem; color:#64748b;">/100</span></div>
-</div>
-""", unsafe_allow_html=True)
-
-    st.markdown("<div class='gradient-divider'></div>", unsafe_allow_html=True)
-    st.markdown("""
-<div style="font-size:0.75rem; color:#475569; text-align:center; line-height:1.6;">
-    Built for software engineering students<br>
-    <a href="https://github.com/UdeepChowdary/DevPilot_AI" target="_blank"
-       style="color:#6366f1; text-decoration:none;">Star on GitHub</a>
-</div>
-""", unsafe_allow_html=True)
+render_sidebar()
 
 
 # ── Hero ──────────────────────────────────────────────────────────────────────

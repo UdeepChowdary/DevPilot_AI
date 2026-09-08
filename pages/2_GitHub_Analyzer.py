@@ -9,6 +9,7 @@ import plotly.graph_objects as go
 import plotly.express as px
 import sys
 import os
+import html
 from datetime import datetime
 
 # Ensure utils is importable from the pages/ directory
@@ -18,6 +19,7 @@ from utils.github_fetcher import fetch_complete_github_data
 from utils.github_scorer import audit_github_profile, generate_markdown_report
 from utils.github_ai_reviewer import generate_ai_critique
 from utils.pdf_generator import generate_github_pdf
+from utils.sidebar import render_sidebar
 
 # ─── Page Config ──────────────────────────────────────────────────────────────
 st.set_page_config(
@@ -26,6 +28,9 @@ st.set_page_config(
     layout="wide",
 )
 
+# ─── Sidebar ──────────────────────────────────────────────────────────────────
+render_sidebar()
+
 # ─── Custom CSS ───────────────────────────────────────────────────────────────
 st.markdown("""
 <style>
@@ -33,11 +38,11 @@ st.markdown("""
 * { font-family: 'Inter', sans-serif; }
 
 .hero-github {
-    background: linear-gradient(135deg, #0f0c29 0%, #302b63 50%, #24243e 100%);
+    background: linear-gradient(135deg, #3b0764 0%, #a855f7 100%);
     border-radius: 16px;
     padding: 2.2rem 2.4rem;
     margin-bottom: 1.8rem;
-    border: 1px solid rgba(99, 102, 241, 0.25);
+    border: 1px solid rgba(168, 85, 247, 0.4);
     color: white;
     position: relative;
     overflow: hidden;
@@ -49,7 +54,7 @@ st.markdown("""
     right: -5%;
     width: 300px;
     height: 300px;
-    background: radial-gradient(circle, rgba(99,102,241,0.15) 0%, transparent 70%);
+    background: radial-gradient(circle, rgba(168,85,247,0.2) 0%, transparent 70%);
     border-radius: 50%;
     pointer-events: none;
 }
@@ -209,11 +214,12 @@ with col_adv:
         gemini_key_input = st.text_input(
             "Gemini API Key (Optional)",
             type="password",
+            value=st.session_state.get("gemini_api_key", ""),
             placeholder="AIzaSy...",
             help="Optional. Generates custom AI recruiter critiques and XYZ resume bullets.",
         )
-        if not gemini_key_input and os.getenv("GEMINI_API_KEY"):
-            gemini_key_input = os.getenv("GEMINI_API_KEY")
+        if gemini_key_input:
+            st.session_state["gemini_api_key"] = gemini_key_input.strip()
 
 st.markdown("<br>", unsafe_allow_html=True)
 analyze_btn = st.button("Analyze GitHub Profile", type="primary", use_container_width=True)
@@ -372,7 +378,7 @@ if "gh_data" in st.session_state and "gh_audit" in st.session_state:
 
         with c1:
             st.markdown("### Recruiter Audit Verdict")
-            st.info(audit["verdict"], icon="")
+            st.info(audit["verdict"])
 
             # Green Flags vs Red Flags
             if audit["green_flags"]:
@@ -580,7 +586,7 @@ if "gh_data" in st.session_state and "gh_audit" in st.session_state:
             st.caption(f"*{gen_tag}*")
 
             st.markdown("#### Executive Recruiter Summary")
-            st.info(critique.get("executive_summary", ""), icon="")
+            st.info(critique.get("executive_summary", ""))
 
             st.markdown("<br>", unsafe_allow_html=True)
             st.markdown("#### 30-Second Interview Elevator Pitch")

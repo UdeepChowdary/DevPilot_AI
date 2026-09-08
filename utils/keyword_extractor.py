@@ -78,19 +78,16 @@ for _skill in TECH_SKILLS:
             (_skill, re.compile(rf"\b{re.escape(_skill)}\b", re.IGNORECASE))
         )
 
-# Module-level Rake singleton to avoid re-initializing on every call
-_rake_instance = Rake(min_length=1, max_length=3)
-
-
 def _clean_token(term: str) -> str:
     """Normalize term for comparison."""
     return term.strip().lower()
 
 
 def _rake_keywords(text: str, max_keywords: int = 25) -> list[str]:
-    """Extract top phrases using RAKE algorithm (uses module-level singleton)."""
-    _rake_instance.extract_keywords_from_text(text)
-    ranked = _rake_instance.get_ranked_phrases()
+    """Extract top phrases using RAKE algorithm (thread-safe, local instance)."""
+    rake = Rake(min_length=1, max_length=3)
+    rake.extract_keywords_from_text(text)
+    ranked = rake.get_ranked_phrases()
     cleaned = []
     for phrase in ranked:
         norm = _clean_token(phrase)
@@ -172,24 +169,18 @@ def compare_keywords(resume_text: str, jd_text: str) -> dict:
     matched = []
     missing = []
 
+    def _matches_in_text(term: str, target: str) -> bool:
+        if " " in term:
+            return term in target
+        if re.search(r"[\+\#\.]", term):
+            return bool(re.search(rf"(?:^|[\s,;/\(\)\[\]]){re.escape(term)}(?:$|[\s,;/\(\)\[\]])", target))
+        return bool(re.search(rf"\b{re.escape(term)}\b", target))
+
     for kw in jd_kws:
-        if kw in resume_kws:
+        if kw in resume_kws or _matches_in_text(kw, resume_lower):
             matched.append(kw)
-        elif len(kw) <= 3 and kw in SHORT_TECH_WHITELIST:
-            if re.search(rf"\b{re.escape(kw)}\b", resume_lower):
-                matched.append(kw)
-            else:
-                missing.append(kw)
-        elif " " in kw:
-            if kw in resume_lower:
-                matched.append(kw)
-            else:
-                missing.append(kw)
         else:
-            if re.search(rf"\b{re.escape(kw)}\b", resume_lower):
-                matched.append(kw)
-            else:
-                missing.append(kw)
+            missing.append(kw)
 
     matched = sorted(list(set(matched)))
     missing = sorted(list(set(missing)))

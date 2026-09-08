@@ -1,4 +1,5 @@
 import os
+import re
 import json
 import logging
 from typing import Optional, Any
@@ -8,38 +9,26 @@ load_dotenv()
 
 logger = logging.getLogger(__name__)
 
-_cached_client = None
-_cached_key = None
-
-
 def _get_client(api_key: Optional[str] = None):
     """
-    Return a cached genai.Client.
+    Return a thread-isolated genai.Client instance.
     Uses google-genai (new SDK) first, falls back to legacy google-generativeai if unavailable.
     """
-    global _cached_client, _cached_key
-    key = api_key or os.getenv("GEMINI_API_KEY")
-    if not key or not key.strip():
+    key = (api_key or "").strip() or os.getenv("GEMINI_API_KEY", "").strip()
+    if not key:
         raise ValueError("GEMINI_API_KEY not found. Please provide a valid Gemini API key.")
-
-    clean_key = key.strip()
-    if _cached_client is not None and _cached_key == clean_key:
-        return _cached_client
 
     try:
         # New SDK: google-genai
         from google import genai
-        client = genai.Client(api_key=clean_key)
-        _cached_client = ("new", client)
+        client = genai.Client(api_key=key)
+        return ("new", client)
     except ImportError:
         # Legacy SDK: google-generativeai
         import google.generativeai as genai_legacy
-        genai_legacy.configure(api_key=clean_key)
+        genai_legacy.configure(api_key=key)
         model = genai_legacy.GenerativeModel("gemini-1.5-flash")
-        _cached_client = ("legacy", model)
-
-    _cached_key = clean_key
-    return _cached_client
+        return ("legacy", model)
 
 
 def ask(prompt: str, api_key: Optional[str] = None) -> Optional[str]:
@@ -76,7 +65,7 @@ def ask(prompt: str, api_key: Optional[str] = None) -> Optional[str]:
 def ask_json(prompt: str, api_key: Optional[str] = None) -> Any:
     """
     Send a prompt expecting a JSON response.
-    Robustly strips markdown code fences (```json ... ``` or ``` ... ```) before parsing.
+    Robustly extracts JSON from markdown code fences or raw object/array strings.
     Returns None if the response is empty or cannot be parsed.
     """
     raw = ask(prompt, api_key=api_key)
@@ -85,16 +74,18 @@ def ask_json(prompt: str, api_key: Optional[str] = None) -> Any:
 
     cleaned = raw.strip()
 
-    # Strip leading code fence line (```json or ```) and trailing ```
-    if cleaned.startswith("```"):
-        lines = cleaned.splitlines()
-        inner_lines = lines[1:]
-        if inner_lines and inner_lines[-1].strip() == "```":
-            inner_lines = inner_lines[:-1]
-        cleaned = "\n".join(inner_lines).strip()
+    # Extract JSON inside ```json ... ``` or ``` ... ```
+    fence_match = re.search(r"```(?:json)?\s*([\s\S]*?)\s*```", cleaned)
+    if fence_match:
+        cleaned = fence_match.group(1).strip()
+    else:
+        # Fallback: extract the first contiguous JSON object or array
+        obj_match = re.search(r"(\{[\s\S]*\}|\[[\s\S]*\])", cleaned)
+        if obj_match:
+            cleaned = obj_match.group(1).strip()
 
     try:
         return json.loads(cleaned)
     except json.JSONDecodeError as e:
-        logger.error("Failed to parse Gemini JSON response: %s\nRaw: %s", e, cleaned[:500])
+        logger.error("Failed to parse Gemini JSON response: %s", e)
         return None

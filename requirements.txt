@@ -40,3 +40,8 @@ python-dotenv
 # Google AI — new SDK (preferred); legacy google-generativeai used as fallback if not installed
 google-genai
 # google-generativeai  # uncomment as fallback if google-genai is unavailable
+
+# ── Development / Testing ──────────────────────────────────────────────────────
+# Install with: pip install pytest pytest-mock
+pytest>=7.4.0
+pytest-mock>=3.12.0
