@@ -256,13 +256,6 @@ modules = [
         "page": "pages/2_GitHub_Analyzer.py",
     },
     {
-        "icon": "💻",
-        "title": "AI Code Reviewer",
-        "desc": "Detect bugs, code smells, calculate time/space complexity, and generate refactoring suggestions.",
-        "status": "live",
-        "page": "pages/3_Code_Reviewer.py",
-    },
-    {
         "icon": "🎤",
         "title": "AI Mock Interview",
         "desc": "Resume-based technical & behavioral interview simulations with real-time feedback.",

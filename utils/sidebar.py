@@ -71,17 +71,6 @@ def render_sidebar() -> None:
         st.page_link("pages/1_Resume_Analyzer.py", label="📄  Resume Analyzer", use_container_width=True)
         st.page_link("pages/2_GitHub_Analyzer.py", label="🐙  GitHub Profile Analyzer", use_container_width=True)
 
-        # Code Reviewer — link shown only once the page file exists
-        import os as _os
-        _cr_path = _os.path.join(_os.path.dirname(__file__), "..", "pages", "3_Code_Reviewer.py")
-        if _os.path.exists(_cr_path):
-            st.page_link("pages/3_Code_Reviewer.py", label="💻  AI Code Reviewer", use_container_width=True)
-        else:
-            st.markdown(
-                "<div style='padding:0.4rem 0.75rem; color:#475569; font-size:0.85rem;'>💻 AI Code Reviewer <span style='font-size:0.72rem; color:#6366f1;'>coming soon</span></div>",
-                unsafe_allow_html=True,
-            )
-
         st.markdown("<div class='sidebar-gradient-divider'></div>", unsafe_allow_html=True)
 
         # ── Session Scores ────────────────────────────────────────────────
