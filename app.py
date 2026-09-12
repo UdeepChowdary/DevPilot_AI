@@ -259,7 +259,8 @@ modules = [
         "icon": "💻",
         "title": "AI Code Reviewer",
         "desc": "Detect bugs, code smells, calculate time/space complexity, and generate refactoring suggestions.",
-        "status": "soon",
+        "status": "live",
+        "page": "pages/3_Code_Reviewer.py",
     },
     {
         "icon": "🎤",

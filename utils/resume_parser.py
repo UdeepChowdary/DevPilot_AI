@@ -27,7 +27,7 @@ SECTION_PATTERNS = {
         re.IGNORECASE,
     ),
     "education": re.compile(
-        r"^(education|academic|academics|qualifications?|degrees?|educational\s+background)$",
+        r"^(education|academic|academics|qualifications?|degrees?|educational\s+background|academic\s+background)$",
         re.IGNORECASE,
     ),
     "skills": re.compile(

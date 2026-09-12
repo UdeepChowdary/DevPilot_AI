@@ -47,7 +47,7 @@
 | :--- | :---: | :--- |
 | **Resume Analyzer** | Live | ATS scoring (0–100), layout-aware PDF/DOCX parsing, TF-IDF keyword match, 200+ skill taxonomy, Google XYZ bullet rewriter. |
 | **GitHub Profile Analyzer** | Live | Portfolio readiness score (0–100), repo documentation & license audit, language byte breakdown, and AI resume bullets. |
-| **AI Code Reviewer** | Planned | Automated bug detection, asymptotic time/space complexity analysis ($O(N)$), and architectural refactoring suggestions. |
+| **AI Code Reviewer** | **Live ✅** | Static analysis for Python, JS, TS, Java, Go, C++, Rust; AST/regex security checks; cyclomatic & Big-O complexity estimation; side-by-side refactoring diff generator. |
 | **AI Mock Interview** | Planned | Resume-tailored behavioral & technical interview simulation with speech transcription and pacing critique. |
 | **LeetCode Coach** | Planned | Algorithmic topic radar, weak-pattern diagnostic, and automated weekly practice roadmaps. |
 | **Placement Dashboard** | Planned | Consolidated readiness scorecard, milestone tracker, and application pipeline manager. |
@@ -220,7 +220,7 @@ Open your browser at `http://localhost:8501`.
 
 - [x] **v1.0**: Resume Analyzer (ATS Scoring, Keyword Matching, Multi-engine Bullets, PDF/DOCX Support, Report Exporter)
 - [x] **v1.1**: GitHub Profile Analyzer (Portfolio scoring, repo health audit, tech stack breakdown, AI resume bullets)
-- [ ] **v1.5**: AI Code Reviewer (Static analysis, complexity calculation, refactoring tips)
+- [x] **v1.5**: AI Code Reviewer (Static analysis for 7 languages, cyclomatic/Big-O complexity, security checks, refactoring suggestions)
 - [ ] **v2.0**: AI Mock Interview (Resume-tailored questions, audio transcription, feedback)
 - [ ] **v2.5**: LeetCode Algorithmic Coach & Placement Readiness Tracker
 
