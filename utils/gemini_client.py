@@ -19,6 +19,8 @@ def get_active_gemini_key(api_key: Optional[str] = None) -> str:
         try:
             import streamlit as st
             key = (st.session_state.get("gemini_api_key") or "").strip()
+            if not key and hasattr(st, "secrets") and "GEMINI_API_KEY" in st.secrets:
+                key = str(st.secrets["GEMINI_API_KEY"]).strip()
         except Exception:
             pass
     if not key:

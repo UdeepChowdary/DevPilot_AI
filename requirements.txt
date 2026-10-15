@@ -18,13 +18,11 @@ python-docx
 
 # NLP & keyword extraction
 spacy
+https://github.com/explosion/spacy-models/releases/download/en_core_web_sm-3.8.0/en_core_web_sm-3.8.0-py3-none-any.whl
 rake-nltk
 
 # ML scoring
 scikit-learn
-
-# NLP downloads required after install:
-#   python -m spacy download en_core_web_sm
 
 # Neural bullet enhancement (CPU-only to avoid pulling 2GB+ CUDA builds)
 transformers

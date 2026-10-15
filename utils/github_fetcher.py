@@ -43,8 +43,18 @@ def _get_headers(token: Optional[str] = None) -> Dict[str, str]:
         "Accept": "application/vnd.github.v3+json",
         "User-Agent": "DevPilot-AI-Dashboard",
     }
-    # Priority: explicitly passed token -> environment variable
-    auth_token = token or os.getenv("GITHUB_TOKEN")
+    # Priority: explicitly passed token -> Streamlit session_state -> Streamlit secrets -> environment variable
+    auth_token = token
+    if not auth_token:
+        try:
+            import streamlit as st
+            auth_token = st.session_state.get("github_token")
+            if not auth_token and hasattr(st, "secrets") and "GITHUB_TOKEN" in st.secrets:
+                auth_token = str(st.secrets["GITHUB_TOKEN"]).strip()
+        except Exception:
+            pass
+    if not auth_token:
+        auth_token = os.getenv("GITHUB_TOKEN")
     if auth_token and auth_token.strip():
         headers["Authorization"] = f"token {auth_token.strip()}"
     return headers
