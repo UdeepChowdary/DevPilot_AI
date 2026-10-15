@@ -274,6 +274,7 @@ Synthesizes candidate performance across **4 core pillars** (weighted 25% each b
 DevPilot_AI/
 ├── app.py                      # Main landing page & module dashboard
 ├── requirements.txt            # Python dependencies
+├── .env.example                # Example environment configuration
 ├── pages/
 │   ├── 1_Resume_Analyzer.py    # Resume Analyzer UI & interactive workflows
 │   ├── 2_GitHub_Analyzer.py    # GitHub Profile Analyzer & Recruiter Auditor
@@ -334,7 +335,15 @@ pip install -r requirements.txt
 ```
 
 ### 3. (Optional) Configure Environment Variables
-Create a `.env` file in the root directory:
+Copy `.env.example` to `.env` or create a `.env` file in the root directory:
+```bash
+# Windows PowerShell:
+Copy-Item .env.example .env
+
+# macOS / Linux:
+cp .env.example .env
+```
+Configure your keys inside `.env`:
 ```env
 GEMINI_API_KEY=your_gemini_api_key_here
 GITHUB_TOKEN=your_optional_github_token_here
