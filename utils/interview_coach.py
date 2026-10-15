@@ -12,7 +12,7 @@ import json
 import logging
 from typing import Dict, List, Any, Optional
 
-from utils.gemini_client import ask, ask_json
+from utils.gemini_client import ask, ask_json, get_active_gemini_key
 from utils.constants import ACTION_VERBS
 from utils.hf_models import hf_generate_interview_questions, hf_evaluate_interview_answer
 
@@ -213,7 +213,7 @@ def generate_interview_questions(
             logger.warning("HF interview question generation fallback: %s", e)
 
     # Try Gemini AI first if configured
-    key = (api_key or "").strip() or os.getenv("GEMINI_API_KEY", "").strip()
+    key = get_active_gemini_key(api_key)
     if key and engine != "offline":
         ai_questions = _generate_questions_with_gemini(
             role=role,
@@ -440,7 +440,7 @@ def evaluate_candidate_answer(
             logger.warning("HF answer evaluation fallback: %s", e)
 
     # 2. Try Gemini AI evaluator if requested and available
-    key = (api_key or "").strip() or os.getenv("GEMINI_API_KEY", "").strip()
+    key = get_active_gemini_key(api_key)
     if key and engine != "offline":
         ai_evaluation = _evaluate_with_gemini(
             question_obj=question_obj,

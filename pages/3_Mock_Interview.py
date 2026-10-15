@@ -24,6 +24,7 @@ from utils.interview_coach import (
 )
 from utils.pdf_generator import generate_interview_pdf
 from utils.sidebar import render_sidebar
+from utils.gemini_client import get_active_gemini_key, render_byok_section
 
 # ─── Page Config ──────────────────────────────────────────────────────────────
 st.set_page_config(
@@ -281,16 +282,7 @@ if not st.session_state["interview_active"]:
             st.caption("🚀 **Local Neural Engine Active:** Generates dynamic questions and analyzes answer depth on-device without external API calls.")
         elif "Gemini" in chosen_eng_label:
             selected_interview_engine = "gemini"
-            with st.expander("⚙️ Gemini API Configuration", expanded=True):
-                gemini_key_input = st.text_input(
-                    "Gemini API Key",
-                    type="password",
-                    value=st.session_state.get("gemini_api_key", ""),
-                    help="Optional if GEMINI_API_KEY environment variable is configured.",
-                    key="mock_interview_gemini_key_input",
-                )
-                if gemini_key_input:
-                    st.session_state["gemini_api_key"] = gemini_key_input.strip()
+            render_byok_section(widget_key="interview_byok", compact=False)
         else:
             selected_interview_engine = "offline"
             st.caption("⚡ **Heuristic Engine Active:** Uses curated 30+ question taxonomies and deterministic STAR framework rubrics.")
@@ -301,9 +293,11 @@ if not st.session_state["interview_active"]:
     start_btn = st.button("Start Mock Interview Session", type="primary", use_container_width=True)
 
     if start_btn:
+        ai_key = get_active_gemini_key()
+        chosen_engine = st.session_state.get("interview_engine", "hf")
+        if chosen_engine == "gemini" and not ai_key:
+            st.warning("⚠️ No Gemini API key detected. Please paste your key in the Bring Your Own Key slot above, or select Hugging Face / Heuristic engine.")
         with st.spinner("Generating tailored interview loop questions..."):
-            ai_key = st.session_state.get("gemini_api_key")
-            chosen_engine = st.session_state.get("interview_engine", "hf")
             questions = generate_interview_questions(
                 role=target_role,
                 company_style=company_style,
@@ -481,7 +475,7 @@ else:
         
         # Audio transcription button if Gemini key available
         if audio_val is not None:
-            ai_key = st.session_state.get("gemini_api_key") or os.getenv("GEMINI_API_KEY")
+            ai_key = get_active_gemini_key()
             if ai_key and st.button("Transcribe Audio to Text with Gemini AI", key=f"transcribe_btn_{curr_q['id']}"):
                 with st.spinner("Transcribing spoken audio..."):
                     try:
@@ -547,7 +541,7 @@ else:
                 st.warning("Please type or record a response before submitting.")
             else:
                 with st.spinner("Staff Engineer AI is analyzing your response across 4 dimensions..."):
-                    ai_key = st.session_state.get("gemini_api_key")
+                    ai_key = get_active_gemini_key()
                     eval_engine = st.session_state.get("session_engine", st.session_state.get("interview_engine", "hf"))
                     evaluation = evaluate_candidate_answer(
                         question_obj=curr_q,

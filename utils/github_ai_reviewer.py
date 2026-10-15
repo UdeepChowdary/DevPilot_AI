@@ -8,7 +8,7 @@ Falls back seamlessly to offline heuristic rule-based recommendations.
 from typing import Dict, List, Any, Optional
 import json
 import os
-from utils.gemini_client import ask_json
+from utils.gemini_client import ask_json, get_active_gemini_key
 from utils.hf_models import hf_generate_github_critique
 
 
@@ -96,7 +96,7 @@ def generate_ai_critique(
     if engine == "hf":
         return hf_generate_github_critique(profile_data, audit_data)
 
-    key = api_key or os.getenv("GEMINI_API_KEY")
+    key = get_active_gemini_key(api_key)
     if not key or not key.strip():
         # Fall back to Hugging Face local neural engine first, then rule-based
         try:

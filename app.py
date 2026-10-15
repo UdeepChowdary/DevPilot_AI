@@ -264,7 +264,7 @@ st.markdown("""
     <div class="badge-row">
         <span class="badge">ML & NLP Powered</span>
         <span class="badge">Instant Heuristic Engine</span>
-        <span class="badge">Optional Gemini AI</span>
+        <span class="badge">Gemini AI (BYOK Support)</span>
         <span class="badge">Free & Open Source</span>
     </div>
 </div>
@@ -345,6 +345,6 @@ st.markdown(chips, unsafe_allow_html=True)
 
 st.markdown("<br>", unsafe_allow_html=True)
 st.markdown(
-    "<p style='color:#64748b; font-size:0.85rem; text-align:center;'>DevPilot AI <span style='color:#818cf8; font-weight:600;'>v3.1.0</span> • Built for software engineering students</p>",
+    "<p style='color:#64748b; font-size:0.85rem; text-align:center;'>DevPilot AI <span style='color:#818cf8; font-weight:600;'>v3.1.1</span> • Built for software engineering students</p>",
     unsafe_allow_html=True,
 )

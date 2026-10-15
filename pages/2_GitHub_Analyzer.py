@@ -20,6 +20,7 @@ from utils.github_scorer import audit_github_profile, generate_markdown_report
 from utils.github_ai_reviewer import generate_ai_critique
 from utils.pdf_generator import generate_github_pdf
 from utils.sidebar import render_sidebar
+from utils.gemini_client import get_active_gemini_key, render_byok_section
 
 # ─── Page Config ──────────────────────────────────────────────────────────────
 st.set_page_config(
@@ -252,15 +253,8 @@ with col_adv:
             placeholder="ghp_xxxxxxxxxxxx",
             help="Optional. Unauthenticated requests are limited to 60/hr. A token unlocks 5,000/hr.",
         )
-        gemini_key_input = st.text_input(
-            "Gemini API Key (Optional)",
-            type="password",
-            value=st.session_state.get("gemini_api_key", ""),
-            placeholder="AIzaSy...",
-            help="Optional. Generates custom AI recruiter critiques and XYZ resume bullets.",
-        )
-        if gemini_key_input:
-            st.session_state["gemini_api_key"] = gemini_key_input.strip()
+        st.markdown("<div style='margin-top:0.6rem; font-size:0.82rem; font-weight:600;'>Gemini AI Key (BYOK)</div>", unsafe_allow_html=True)
+        render_byok_section(widget_key="gh_top_byok", compact=True)
 
 st.markdown("<br>", unsafe_allow_html=True)
 analyze_btn = st.button("Analyze GitHub Profile", type="primary", use_container_width=True)
@@ -633,7 +627,10 @@ if "gh_data" in st.session_state and "gh_audit" in st.session_state:
             key="gh_engine_selector",
         )
 
-        ai_key_to_use = gemini_key_input.strip() if gemini_key_input else None
+        if gh_engine_choice == "gemini":
+            render_byok_section(widget_key="gh_tab4_byok", compact=False)
+
+        ai_key_to_use = get_active_gemini_key()
 
         c_btn_col1, c_btn_col2 = st.columns([2, 1])
         with c_btn_col1:
@@ -645,6 +642,8 @@ if "gh_data" in st.session_state and "gh_audit" in st.session_state:
                     st.rerun()
 
         if trigger_critique:
+            if gh_engine_choice == "gemini" and not ai_key_to_use:
+                st.warning("⚠️ No Gemini API key detected. Please paste your key in the Bring Your Own Key slot above, or select Hugging Face / Rule Engine.")
             with st.spinner(f"Analyzing portfolio repositories with {gh_engine_choice.upper()} Engine..."):
                 critique = generate_ai_critique(gh_data, audit, api_key=ai_key_to_use, engine=gh_engine_choice)
                 st.session_state["gh_ai_critique"] = critique

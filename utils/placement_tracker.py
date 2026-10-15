@@ -13,7 +13,7 @@ import logging
 from datetime import datetime, date
 from typing import Dict, List, Any, Optional
 
-from utils.gemini_client import ask_json
+from utils.gemini_client import ask_json, get_active_gemini_key
 from utils.hf_models import hf_generate_placement_strategy
 
 logger = logging.getLogger(__name__)
@@ -623,7 +623,7 @@ def generate_placement_strategy(
         except Exception as e:
             logger.warning("HF placement strategy fallback: %s", e)
 
-    key = (api_key or "").strip() or os.getenv("GEMINI_API_KEY", "").strip()
+    key = get_active_gemini_key(api_key)
     if key and engine != "offline":
         composite = placement_data.get("composite_score", 65)
         pillars = placement_data.get("pillars", {})

@@ -32,6 +32,7 @@ from utils.placement_tracker import (
 )
 from utils.pdf_generator import generate_placement_dossier_pdf
 from utils.sidebar import render_sidebar
+from utils.gemini_client import get_active_gemini_key, render_byok_section
 
 # ─── Page Config ──────────────────────────────────────────────────────────────
 st.set_page_config(
@@ -451,24 +452,17 @@ with tab2:
     selected_strat_engine = "hf" if "Hugging Face" in strat_choice else "gemini"
 
     if selected_strat_engine == "gemini":
-        with st.expander("⚙️ Gemini API Configuration", expanded=False):
-            gemini_strat_key = st.text_input(
-                "Gemini API Key",
-                type="password",
-                value=st.session_state.get("gemini_api_key", ""),
-                help="Optional if GEMINI_API_KEY environment variable is configured.",
-                key="placement_gemini_key_input",
-            )
-            if gemini_strat_key:
-                st.session_state["gemini_api_key"] = gemini_strat_key.strip()
+        render_byok_section(widget_key="placement_byok", compact=False)
 
     col_btn, _ = st.columns([1.5, 2.5])
     with col_btn:
         generate_strat_btn = st.button("Generate AI Placement Strategy & Sprint", type="primary", use_container_width=True)
 
     if generate_strat_btn or "ai_placement_strategy" not in st.session_state:
+        ai_key = get_active_gemini_key()
+        if selected_strat_engine == "gemini" and not ai_key:
+            st.warning("⚠️ No Gemini API key detected. Please paste your key in the Bring Your Own Key slot above, or select Hugging Face Neural Engine.")
         with st.spinner("AI Strategist is synthesizing multi-pillar metrics and building your 4-week sprint..."):
-            ai_key = st.session_state.get("gemini_api_key")
             strategy = generate_placement_strategy(
                 placement_data=readiness,
                 engine=selected_strat_engine,

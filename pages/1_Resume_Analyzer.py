@@ -19,6 +19,7 @@ from utils.keyword_extractor import extract_keywords, compare_keywords
 from utils.bullet_enhancer import enhance_bullets
 from utils.pdf_generator import generate_resume_pdf
 from utils.sidebar import render_sidebar
+from utils.gemini_client import get_active_gemini_key, render_byok_section
 
 # ─── Page Config ──────────────────────────────────────────────────────────────
 st.set_page_config(
@@ -303,18 +304,7 @@ with st.expander("⚙️ Enhancement Engine & AI Options"):
                 "100% private and offline Google XYZ bullet transformation without external API keys."
             )
         elif enhancement_mode == "gemini":
-            has_env_key = bool(os.getenv("GEMINI_API_KEY"))
-            if not has_env_key:
-                user_key = st.text_input(
-                    "Enter Gemini API Key (optional if in .env):",
-                    type="password",
-                    value=st.session_state.get("gemini_api_key", ""),
-                    help="Used only for generating smart Google XYZ bullet rewrites.",
-                )
-                if user_key:
-                    st.session_state["gemini_api_key"] = user_key.strip()
-            else:
-                st.success("GEMINI_API_KEY detected from environment.")
+            render_byok_section(widget_key="resume_byok", compact=False)
         elif enhancement_mode == "rule_based":
             st.caption("Fast deterministic heuristic engine with action verb swaps and metric verification.")
 
@@ -375,7 +365,9 @@ if analyze_clicked or "resume_results" in st.session_state:
 
             progress_bar.progress(80, text="Enhancing bullet points...")
             bullets = extract_bullet_points(resume_text)
-            gemini_key = st.session_state.get("gemini_api_key")
+            gemini_key = get_active_gemini_key()
+            if enhancement_mode == "gemini" and not gemini_key:
+                st.warning("⚠️ No Gemini API key detected. Using offline heuristic engine instead. Paste your key in the BYOK slot to enable Gemini.")
 
             if enhancement_mode == "t5":
                 # T5 may trigger a ~240MB model download on first run.

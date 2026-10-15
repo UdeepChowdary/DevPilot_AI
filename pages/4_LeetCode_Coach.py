@@ -23,6 +23,7 @@ from utils.leetcode_coach import (
 )
 from utils.pdf_generator import generate_leetcode_pdf
 from utils.sidebar import render_sidebar
+from utils.gemini_client import get_active_gemini_key, render_byok_section
 
 # ─── Page Config ──────────────────────────────────────────────────────────────
 st.set_page_config(
@@ -460,6 +461,7 @@ if st.session_state.get("lc_stats") and st.session_state.get("leetcode_audit"):
             selected_lc_engine = "hf"
         elif "Gemini" in lc_engine_choice:
             selected_lc_engine = "gemini"
+            render_byok_section(widget_key="leetcode_byok", compact=False)
         else:
             selected_lc_engine = "offline"
 
@@ -477,8 +479,10 @@ if st.session_state.get("lc_stats") and st.session_state.get("leetcode_audit"):
         opt_btn = st.button("Analyze Complexity & Optimize", type="primary")
 
         if opt_btn and code_input.strip():
+            ai_key = get_active_gemini_key()
+            if selected_lc_engine == "gemini" and not ai_key:
+                st.warning("⚠️ No Gemini API key detected. Please paste your key in the Bring Your Own Key slot above, or select Hugging Face / Static AST analyzer.")
             with st.spinner("Analyzing runtime and space complexity..."):
-                ai_key = st.session_state.get("gemini_api_key")
                 analysis = analyze_code_complexity(code_input, api_key=ai_key, engine=selected_lc_engine)
 
                 c_col1, c_col2 = st.columns(2)

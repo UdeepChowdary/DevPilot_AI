@@ -14,7 +14,7 @@ import requests
 from requests.adapters import HTTPAdapter
 from urllib3.util.retry import Retry
 
-from utils.gemini_client import ask_json
+from utils.gemini_client import ask_json, get_active_gemini_key
 from utils.hf_models import hf_analyze_code_complexity
 
 logger = logging.getLogger(__name__)
@@ -425,7 +425,7 @@ def analyze_code_complexity(
             logger.warning("HF code complexity analysis fallback: %s", e)
 
     # 2. Try Gemini AI if configured
-    key = (api_key or "").strip() or os.getenv("GEMINI_API_KEY", "").strip()
+    key = get_active_gemini_key(api_key)
     if key and engine != "offline":
         prompt = f"""
 You are a Principal Software Engineer and Competitive Programming Coach.
