@@ -258,8 +258,9 @@ modules = [
     {
         "icon": "🎤",
         "title": "AI Mock Interview",
-        "desc": "Resume-based technical & behavioral interview simulations with real-time feedback.",
-        "status": "soon",
+        "desc": "Resume-tailored technical & behavioral interview simulations with real-time feedback and speech pacing analysis.",
+        "status": "live",
+        "page": "pages/3_Mock_Interview.py",
     },
     {
         "icon": "🎯",

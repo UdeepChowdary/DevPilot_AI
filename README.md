@@ -18,13 +18,14 @@
 
 [![Python](https://img.shields.io/badge/Python-3.10%2B-3776AB?style=for-the-badge&logo=python&logoColor=white)](https://www.python.org/)
 [![Streamlit](https://img.shields.io/badge/Streamlit-1.40%2B-FF4B4B?style=for-the-badge&logo=streamlit&logoColor=white)](https://streamlit.io/)
-[![Google Gemini](https://img.shields.io/badge/Google%20Gemini-1.5%20Flash-8E75B2?style=for-the-badge&logo=google&logoColor=white)](https://ai.google.dev/)
+[![Version](https://img.shields.io/badge/Version-2.0.0-6366F1?style=for-the-badge)](README.md)
+[![Google Gemini](https://img.shields.io/badge/Google%20Gemini-2.0%20Flash-8E75B2?style=for-the-badge&logo=google&logoColor=white)](https://ai.google.dev/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-F59E0B?style=for-the-badge)](LICENSE)
-[![PRs Welcome](https://img.shields.io/badge/PRs-Welcome-10B981?style=for-the-badge)](https://github.com/UdeepChowdary/DevPilot_AI/pulls)
 
 <p align="center">
   <a href="#resume-analyzer"><b>Resume Analyzer</b></a> •
   <a href="#github-profile-analyzer"><b>GitHub Profile Analyzer</b></a> •
+  <a href="#ai-mock-interview"><b>AI Mock Interview</b></a> •
   <a href="#modules-overview"><b>Modules Overview</b></a> •
   <a href="#getting-started"><b>Quick Start</b></a> •
   <a href="#project-structure"><b>Architecture</b></a> •
@@ -47,7 +48,7 @@
 | :--- | :---: | :--- |
 | **Resume Analyzer** | Live | ATS scoring (0–100), layout-aware PDF/DOCX parsing, TF-IDF keyword match, 200+ skill taxonomy, Google XYZ bullet rewriter. |
 | **GitHub Profile Analyzer** | Live | Portfolio readiness score (0–100), repo documentation & license audit, language byte breakdown, and AI resume bullets. |
-| **AI Mock Interview** | Planned | Resume-tailored behavioral & technical interview simulation with speech transcription and pacing critique. |
+| **AI Mock Interview** | Live | Resume-tailored behavioral & technical interview simulation, speech pacing analysis, 4-dimension scoring rubric, and exportable PDF audit. |
 | **LeetCode Coach** | Planned | Algorithmic topic radar, weak-pattern diagnostic, and automated weekly practice roadmaps. |
 | **Placement Dashboard** | Planned | Consolidated readiness scorecard, milestone tracker, and application pipeline manager. |
 
@@ -149,6 +150,36 @@ Evaluates public profiles across **5 core dimensions** calibrated against tech r
 
 ---
 
+## AI Mock Interview
+
+The **AI Mock Interview** simulator replicates real-world technical and behavioral interview loops calibrated against top tech company screening bars:
+
+### 1. Resume-Tailored Question Generation
+- Auto-extracts technologies, frameworks, and project bullets from your active parsed resume to generate hyper-tailored questions.
+- Customizable interview styles: **FAANG / Tier-1 Big Tech**, **High-Growth Tech Unicorn**, **FinTech / Low-Latency**, and **Early-Stage Startup**.
+- Question focus modes: *Mixed Technical & Behavioral*, *Deep System Architecture*, and *Behavioral STAR Leadership*.
+
+### 2. Multi-Modal Audio & Written Delivery
+- Native microphone recording support using Streamlit audio input.
+- Real-time audio transcription powered by Google Gemini multimodal understanding.
+- Rich text answer editor allowing candidates to speak, type, or refine responses.
+
+### 3. Recruiter Scoring Rubric (0–100)
+Evaluates candidate answers across **4 core dimensions** (25 pts each):
+- **Technical Correctness & Depth (25 pts)**: Architecture choices, data structures, concurrency, and API contracts.
+- **Structure & Organization (25 pts)**: Logical sequencing using the **STAR Method** (*Situation, Task, Action, Result*).
+- **Communication & Delivery (25 pts)**: Clarity, brevity, and automatic verbal filler detection (`um`, `uh`, `basically`, `like`).
+- **Engineering Tradeoffs & Metrics (25 pts)**: P99 latency impact, memory/CPU tradeoffs, scale, failure modes, and testability.
+
+### 4. Exemplary Senior Engineer Model Answers
+- Compares your response against a recruiter-approved Staff Engineer model answer for every question.
+- Delivers granular "What went well" feedback and actionable missing points.
+
+### 5. Exportable Interview Performance Audit
+- 1-click download of a complete, professionally formatted PDF audit report summarizing overall scores, competency breakdowns, and question-by-question critiques.
+
+---
+
 ## Project Structure
 
 ```bash
@@ -156,8 +187,9 @@ DevPilot_AI/
 ├── app.py                      # Main landing page & module dashboard
 ├── requirements.txt            # Python dependencies
 ├── pages/
-│   ├── 1_📄_Resume_Analyzer.py # Resume Analyzer UI & interactive workflows
-│   └── 2_🐙_GitHub_Analyzer.py # GitHub Profile Analyzer & Recruiter Auditor
+│   ├── 1_Resume_Analyzer.py    # Resume Analyzer UI & interactive workflows
+│   ├── 2_GitHub_Analyzer.py    # GitHub Profile Analyzer & Recruiter Auditor
+│   └── 3_Mock_Interview.py     # AI Mock Interview simulator & audio coach
 ├── utils/
 │   ├── __init__.py
 │   ├── resume_parser.py        # PDF, DOCX, TXT extraction & section detection
@@ -167,7 +199,15 @@ DevPilot_AI/
 │   ├── github_fetcher.py       # GitHub REST API v3 data ingestion & statistics
 │   ├── github_scorer.py        # 0–100 Portfolio readiness scoring & diagnostics
 │   ├── github_ai_reviewer.py   # Gemini AI portfolio coach & resume bullet generator
+│   ├── interview_coach.py      # Question generator, speech analyzer & answer rubric
+│   ├── pdf_generator.py        # Professional PDF report exporter (fpdf2)
+│   ├── sidebar.py              # Shared sidebar navigation & session scorecards
 │   └── gemini_client.py        # Google Gemini API connector
+├── tests/
+│   ├── test_ats_scorer.py      # ATS scoring unit & integration tests
+│   ├── test_github_scorer.py   # GitHub audit & portfolio scoring tests
+│   ├── test_interview_coach.py # Mock interview question & rubric evaluation tests
+│   └── test_resume_parser.py   # Text extraction & section parsing tests
 └── LICENSE                     # MIT License
 ```
 
@@ -219,7 +259,7 @@ Open your browser at `http://localhost:8501`.
 
 - [x] **v1.0**: Resume Analyzer (ATS Scoring, Keyword Matching, Multi-engine Bullets, PDF/DOCX Support, Report Exporter)
 - [x] **v1.1**: GitHub Profile Analyzer (Portfolio scoring, repo health audit, tech stack breakdown, AI resume bullets)
-- [ ] **v2.0**: AI Mock Interview (Resume-tailored questions, audio transcription, feedback)
+- [x] **v2.0**: AI Mock Interview (Resume-tailored questions, audio recording & transcription, 4-dimension scoring, pacing analysis, PDF export)
 - [ ] **v2.5**: LeetCode Algorithmic Coach & Placement Readiness Tracker
 
 ---

@@ -593,3 +593,129 @@ def generate_github_pdf(gh_data: dict, audit: dict) -> bytes:
         pdf.ln(2)
 
     return bytes(pdf.output())
+
+
+# ---------------------------------------------------------------------------
+# Mock Interview PDF
+# ---------------------------------------------------------------------------
+
+def generate_interview_pdf(session: dict) -> bytes:
+    """
+    Generate a styled PDF for the AI Mock Interview results.
+
+    Args:
+        session: Dict returned by summarize_interview_session()
+    Returns:
+        bytes -- the raw PDF binary ready for st.download_button
+    """
+    score = session.get("total_score", 0)
+    grade = _clean(session.get("grade", "Candidate"))
+    role = _clean(session.get("role", "Software Engineer"))
+    style = _clean(session.get("company_style", "General Tech"))
+    verdict = _clean(session.get("verdict", ""))
+    dims = session.get("dimensions", {})
+    evals = session.get("evaluations", [])
+
+    pdf = _DevPilotPDF(f"Mock Interview Audit -- {role}")
+    pdf.add_page()
+
+    # Title & Target Role
+    pdf.set_font("Helvetica", "B", 18)
+    pdf.set_text_color(*_Color.BG_DARK)
+    pdf.cell(0, 10, f"Interview Performance Report: {role}", new_x=XPos.LMARGIN, new_y=YPos.NEXT)
+
+    pdf.set_font("Helvetica", "", 10)
+    pdf.set_text_color(*_Color.GRAY_500)
+    pdf.cell(0, 6, f"Company Style: {style}  |  Completed Questions: {len(evals)}",
+             new_x=XPos.LMARGIN, new_y=YPos.NEXT)
+    pdf.ln(3)
+
+    pdf.score_badge(score, label=grade)
+    pdf.ln(4)
+
+    # Executive Verdict
+    pdf.section_title("Interviewer Verdict")
+    pdf.body(verdict)
+    pdf.ln(2)
+
+    # Core Dimensions
+    pdf.section_title("Competency Breakdown")
+    for dim in dims.values():
+        pdf.progress_bar(_clean(dim["label"]), int(dim["score"]), dim["max"])
+    pdf.ln(2)
+
+    # Strengths
+    if session.get("all_strengths"):
+        pdf.section_title("Key Candidate Strengths")
+        for s in session["all_strengths"]:
+            pdf.bullet_item(s, color=_Color.GREEN, prefix="+")
+        pdf.ln(2)
+
+    # Improvements
+    if session.get("all_improvements"):
+        pdf.section_title("High-Leverage Areas to Practice")
+        for imp in session["all_improvements"]:
+            pdf.bullet_item(imp, color=_Color.RED, prefix="!")
+        pdf.ln(2)
+
+    # Question-by-Question Deep Dive
+    if evals:
+        if pdf.get_y() > 40:
+            pdf.add_page()
+        pdf.section_title("Question-by-Question Analysis")
+        pdf.caption("Detailed feedback on structure, depth, delivery, and model answers.")
+        pdf.ln(2)
+
+        for i, ev in enumerate(evals, 1):
+            if pdf.get_y() > 220:
+                pdf.add_page()
+
+            q_score = ev.get("overall_score", 0)
+            q_color = _Color.GREEN if q_score >= 75 else _Color.YELLOW if q_score >= 50 else _Color.RED
+            bx, by = pdf.get_x(), pdf.get_y()
+
+            # Question Header Card
+            pdf.set_fill_color(245, 245, 252)
+            pdf.rect(bx, by, 174, 12, style="F")
+            pdf.set_fill_color(*q_color)
+            pdf.rect(bx, by, 3, 12, style="F")
+
+            pdf.set_font("Helvetica", "B", 9.5)
+            pdf.set_text_color(*_Color.INDIGO)
+            pdf.set_xy(bx + 5, by + 2)
+            pdf.cell(125, 5, _clean(f"Question #{i}"), new_x=XPos.RIGHT, new_y=YPos.TOP)
+
+            pdf.set_font("Helvetica", "B", 9)
+            pdf.set_text_color(*q_color)
+            pdf.set_xy(bx + 130, by + 2)
+            pdf.cell(40, 5, f"Score: {q_score}/100", align="R", new_x=XPos.LMARGIN, new_y=YPos.NEXT)
+
+            pdf.set_xy(bx, by + 14)
+
+            # Question text
+            pdf.set_font("Helvetica", "B", 9.5)
+            pdf.set_text_color(*_Color.GRAY_900)
+            pdf.multi_cell(0, 5, _clean(f"Prompt: {ev.get('question', '')}"),
+                           new_x=XPos.LMARGIN, new_y=YPos.NEXT)
+            pdf.ln(1)
+
+            # Candidate answer summary
+            ans = ev.get("candidate_answer", "")
+            if len(ans) > 200:
+                ans = ans[:197] + "..."
+            pdf.set_font("Helvetica", "I", 8.5)
+            pdf.set_text_color(*_Color.GRAY_700)
+            pdf.multi_cell(0, 4.5, _clean(f"Candidate Response: \"{ans}\""),
+                           new_x=XPos.LMARGIN, new_y=YPos.NEXT)
+            pdf.ln(1)
+
+            # Specific feedback
+            for s in ev.get("strengths", [])[:2]:
+                pdf.bullet_item(s, color=_Color.GREEN, prefix="+")
+            for imp in ev.get("areas_to_improve", [])[:2]:
+                pdf.bullet_item(imp, color=_Color.RED, prefix="!")
+
+            pdf.divider()
+
+    return bytes(pdf.output())
+
