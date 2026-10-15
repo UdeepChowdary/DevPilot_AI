@@ -72,6 +72,7 @@ def render_sidebar() -> None:
         st.page_link("pages/2_GitHub_Analyzer.py", label="🐙  GitHub Profile Analyzer", use_container_width=True)
         st.page_link("pages/3_Mock_Interview.py", label="🎤  AI Mock Interview", use_container_width=True)
         st.page_link("pages/4_LeetCode_Coach.py", label="🎯  LeetCode Coach", use_container_width=True)
+        st.page_link("pages/5_Placement_Dashboard.py", label="📊  Placement Dashboard", use_container_width=True)
 
         st.markdown("<div class='sidebar-gradient-divider'></div>", unsafe_allow_html=True)
 
@@ -81,9 +82,21 @@ def render_sidebar() -> None:
         github_score = (st.session_state.get("github_audit") or {}).get("total_score")
         interview_score = (st.session_state.get("interview_session") or {}).get("total_score")
         leetcode_score = (st.session_state.get("leetcode_audit") or {}).get("total_score")
+        placement_score = (st.session_state.get("placement_readiness") or {}).get("composite_score")
 
-        if resume_score is not None or github_score is not None or interview_score is not None or leetcode_score is not None:
+        if resume_score is not None or github_score is not None or interview_score is not None or leetcode_score is not None or placement_score is not None:
             st.markdown("**Your Scores**")
+
+            if placement_score is not None:
+                color = "#22c55e" if placement_score >= 80 else "#eab308" if placement_score >= 60 else "#ef4444"
+                st.markdown(f"""
+<div class="sidebar-score-card" style="border-color: rgba(99,102,241,0.5); background: rgba(99,102,241,0.15);">
+    <div class="sidebar-score-label" style="color: #c4b5fd; font-weight:700;">Placement Readiness Index</div>
+    <div style="font-size:1.8rem; font-weight:800; color:{color};">
+        {placement_score}<span style="font-size:0.9rem; color:#64748b;">/100</span>
+    </div>
+</div>
+""", unsafe_allow_html=True)
 
             if resume_score is not None:
                 color = "#22c55e" if resume_score >= 75 else "#eab308" if resume_score >= 50 else "#ef4444"

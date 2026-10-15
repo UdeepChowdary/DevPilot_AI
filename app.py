@@ -273,7 +273,8 @@ modules = [
         "icon": "📊",
         "title": "Placement Readiness Dashboard",
         "desc": "Track overall preparation, calculate readiness score, and manage interview milestones.",
-        "status": "soon",
+        "status": "live",
+        "page": "pages/5_Placement_Dashboard.py",
     },
 ]
 

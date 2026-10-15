@@ -837,3 +837,155 @@ def generate_leetcode_pdf(stats: dict, audit: dict, roadmap: list = None) -> byt
     return bytes(pdf.output())
 
 
+# ---------------------------------------------------------------------------
+# Placement Readiness Dossier PDF Generator
+# ---------------------------------------------------------------------------
+
+def generate_placement_dossier_pdf(
+    candidate_name: str,
+    readiness: dict,
+    milestones_progress: dict,
+    pipeline_analytics: dict,
+    applications: list,
+) -> bytes:
+    """
+    Generate an executive-ready Placement Dossier PDF synthesizing:
+    - 4-pillar readiness score & grade
+    - Target company tier benchmark alignment
+    - Strategic outlook and top action items
+    - Milestone completion summary
+    - Active application pipeline table
+    """
+    c_name = _clean(candidate_name) or "Candidate"
+    score = int(readiness.get("composite_score", 0))
+    grade = _clean(readiness.get("grade", "B"))
+    grade_label = _clean(readiness.get("grade_label", ""))
+    target_tier = _clean(readiness.get("target_tier", "Tier-1"))
+    outlook = _clean(readiness.get("outlook", ""))
+    tier_verdict = _clean(readiness.get("tier_verdict", ""))
+    pillars = readiness.get("pillars", {})
+
+    pdf = _DevPilotPDF(f"Placement Dossier -- {c_name}")
+    pdf.add_page()
+
+    # Title & Profile
+    pdf.set_font("Helvetica", "B", 18)
+    pdf.set_text_color(*_Color.BG_DARK)
+    pdf.cell(0, 10, f"Executive Placement Dossier: {c_name}", new_x=XPos.LMARGIN, new_y=YPos.NEXT)
+
+    pdf.set_font("Helvetica", "", 10)
+    pdf.set_text_color(*_Color.GRAY_500)
+    pdf.cell(0, 6, f"Target: {target_tier}  |  {tier_verdict}", new_x=XPos.LMARGIN, new_y=YPos.NEXT)
+    pdf.ln(3)
+
+    pdf.score_badge(score, label=f"Grade {grade} -- {grade_label}")
+    pdf.ln(4)
+
+    # Strategic Hiring Outlook
+    pdf.section_title("Strategic Hiring Committee Outlook")
+    pdf.body(outlook)
+    pdf.ln(2)
+
+    # 4-Pillar Evaluation Breakdown
+    pdf.section_title("Engineering Readiness by Pillar")
+    pdf.caption("Evaluated against Tier-1 calibrated screening benchmarks.")
+    pdf.ln(2)
+
+    for p_id, p_info in pillars.items():
+        p_name = _clean(p_info.get("name", p_id))
+        p_score = int(p_info.get("score", 0))
+        p_weight = int(p_info.get("weight_pct", 25))
+        p_tested = p_info.get("tested", False)
+        status_tag = "Live Tested" if p_tested else "Baseline"
+        pdf.progress_bar(f"{p_name} ({p_weight}% weight) [{status_tag}]", p_score, 100)
+    pdf.ln(2)
+
+    # Strengths & Bottlenecks
+    if readiness.get("strengths"):
+        pdf.section_title("Competitive Strengths")
+        for s in readiness["strengths"]:
+            pdf.bullet_item(s, color=_Color.GREEN, prefix="+")
+        pdf.ln(2)
+
+    if readiness.get("bottlenecks"):
+        pdf.section_title("Critical Preparation Bottlenecks")
+        for b in readiness["bottlenecks"]:
+            pdf.bullet_item(b, color=_Color.RED, prefix="!")
+        pdf.ln(2)
+
+    if readiness.get("action_items"):
+        pdf.section_title("High-Leverage Action Plan")
+        for idx, item in enumerate(readiness["action_items"], 1):
+            pdf.bullet_item(item, color=_Color.GRAY_700, prefix=f"{idx}.")
+        pdf.ln(2)
+
+    # Page 2: Milestones & Application Pipeline
+    pdf.add_page()
+
+    # Milestone Progress
+    pdf.section_title("Placement Milestone & Sprint Progress")
+    m_done = milestones_progress.get("completed", 0)
+    m_tot = milestones_progress.get("total", 0)
+    m_pct = milestones_progress.get("pct", 0)
+    pdf.body(f"Total Completed: {m_done}/{m_tot} ({m_pct}% sprint complete)")
+    pdf.ln(1)
+
+    for cat_name, cat_data in milestones_progress.get("by_category", {}).items():
+        pdf.progress_bar(f"{cat_name} ({cat_data.get('completed', 0)}/{cat_data.get('total', 0)})",
+                         cat_data.get("pct", 0), 100)
+    pdf.ln(3)
+
+    # Pipeline Funnel Analytics
+    pdf.section_title("Application & Interview Pipeline")
+    tot_apps = pipeline_analytics.get("total", 0)
+    active_apps = pipeline_analytics.get("active", 0)
+    interviews = pipeline_analytics.get("interviews", 0)
+    offers = pipeline_analytics.get("offers", 0)
+    i_rate = pipeline_analytics.get("interview_rate", 0.0)
+
+    pdf.caption(f"Total Applications: {tot_apps}  |  Active: {active_apps}  |  Interviews: {interviews} ({i_rate}% conversion)  |  Offers: {offers}")
+    pdf.ln(2)
+
+    if applications:
+        # Table of top applications
+        for i, app in enumerate(applications[:10], 1):
+            if pdf.get_y() > 250:
+                pdf.add_page()
+
+            comp = _clean(app.get("company", "Company"))
+            role = _clean(app.get("role", "Engineer"))
+            stage = _clean(app.get("stage", "Applied"))
+            date_str = _clean(app.get("applied_date", ""))
+
+            bx, by = pdf.get_x(), pdf.get_y()
+            pdf.set_fill_color(245, 245, 252)
+            pdf.rect(bx, by, 174, 11, style="F")
+
+            # Stage indicator bar
+            stg_col = _Color.GREEN if "Offer" in stage else _Color.INDIGO if "Round" in stage or "Screen" in stage else _Color.GRAY_500
+            pdf.set_fill_color(*stg_col)
+            pdf.rect(bx, by, 3, 11, style="F")
+
+            pdf.set_font("Helvetica", "B", 9)
+            pdf.set_text_color(*_Color.BG_DARK)
+            pdf.set_xy(bx + 5, by + 1.5)
+            pdf.cell(100, 4.5, f"{i}. {comp} -- {role}", new_x=XPos.RIGHT, new_y=YPos.TOP)
+
+            pdf.set_font("Helvetica", "B", 8)
+            pdf.set_text_color(*stg_col)
+            pdf.set_xy(bx + 110, by + 1.5)
+            pdf.cell(60, 4.5, stage, align="R", new_x=XPos.LMARGIN, new_y=YPos.NEXT)
+
+            notes = _clean(app.get("notes", ""))
+            pdf.set_font("Helvetica", "I", 7.5)
+            pdf.set_text_color(*_Color.GRAY_500)
+            pdf.set_xy(bx + 5, by + 6.2)
+            notes_str = f"Applied: {date_str} | {notes[:65]}" if notes else f"Applied: {date_str}"
+            pdf.cell(0, 3.5, notes_str, new_x=XPos.LMARGIN, new_y=YPos.NEXT)
+
+            pdf.set_xy(bx, by + 13)
+
+    return bytes(pdf.output())
+
+
+
