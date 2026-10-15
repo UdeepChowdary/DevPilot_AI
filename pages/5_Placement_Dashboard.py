@@ -10,6 +10,7 @@ import plotly.express as px
 import sys
 import os
 import json
+import html
 from datetime import datetime, date
 
 # Ensure utils is importable from pages/
@@ -543,27 +544,35 @@ with tab3:
             s_color = STAGE_COLORS.get(stage, "#94a3b8")
 
             with st.container():
-                st.markdown(f"""
-<div style="background:#161b22; border:1px solid #30363d; border-left:4px solid {s_color}; border-radius:8px; padding:0.9rem 1.2rem; margin-bottom:0.75rem;">
-    <div style="display:flex; justify-content:space-between; align-items:flex-start;">
-        <div>
-            <span style="font-size:1.1rem; font-weight:700; color:#f0f6fc;">{app.get('company')}</span>
-            <span style="color:#8b949e; font-size:0.9rem;"> -- {app.get('role')}</span>
-            <span style="margin-left:0.6rem; font-size:0.75rem; background:#21262d; border:1px solid #30363d; padding:0.15rem 0.5rem; border-radius:12px; color:#cbd5e1;">{app.get('tier', '').split()[0]}</span>
-        </div>
-        <span style="background:{s_color}22; color:{s_color}; border:1px solid {s_color}; padding:0.2rem 0.7rem; border-radius:12px; font-weight:700; font-size:0.8rem;">
-            {stage}
-        </span>
-    </div>
-    <div style="display:flex; gap:15px; font-size:0.8rem; color:#8b949e; margin-top:0.4rem;">
-        <span>📅 Applied: {app.get('applied_date', 'N/A')}</span>
-        <span>📍 {app.get('location', 'N/A')}</span>
-        <span>💰 {app.get('compensation', 'N/A')}</span>
-        <span>🤝 Referral: {app.get('referral', 'None')}</span>
-    </div>
-    {f'<div style="font-size:0.82rem; color:#c9d1d9; margin-top:0.4rem; font-style:italic;">{app.get("notes")}</div>' if app.get('notes') else ''}
-</div>
-""", unsafe_allow_html=True)
+                company_str = html.escape(str(app.get('company') or ''))
+                role_str = html.escape(str(app.get('role') or ''))
+                tier_str = html.escape(str(app.get('tier', '').split()[0]))
+                loc_str = html.escape(str(app.get('location', 'N/A')))
+                comp_str = html.escape(str(app.get('compensation', 'N/A')))
+                ref_str = html.escape(str(app.get('referral', 'None')))
+                date_str = html.escape(str(app.get('applied_date', 'N/A')))
+                notes_html = f'<div style="font-size:0.82rem; color:#c9d1d9; margin-top:0.4rem; font-style:italic;">{html.escape(app["notes"])}</div>' if app.get('notes') else ''
+
+                app_card_html = (
+                    f'<div style="background:#161b22; border:1px solid #30363d; border-left:4px solid {s_color}; border-radius:8px; padding:0.9rem 1.2rem; margin-bottom:0.75rem;">'
+                    f'<div style="display:flex; justify-content:space-between; align-items:flex-start;">'
+                    f'<div>'
+                    f'<span style="font-size:1.1rem; font-weight:700; color:#f0f6fc;">{company_str}</span>'
+                    f'<span style="color:#8b949e; font-size:0.9rem;"> -- {role_str}</span>'
+                    f'<span style="margin-left:0.6rem; font-size:0.75rem; background:#21262d; border:1px solid #30363d; padding:0.15rem 0.5rem; border-radius:12px; color:#cbd5e1;">{tier_str}</span>'
+                    f'</div>'
+                    f'<span style="background:{s_color}22; color:{s_color}; border:1px solid {s_color}; padding:0.2rem 0.7rem; border-radius:12px; font-weight:700; font-size:0.8rem;">{stage}</span>'
+                    f'</div>'
+                    f'<div style="display:flex; gap:15px; font-size:0.8rem; color:#8b949e; margin-top:0.4rem;">'
+                    f'<span>📅 Applied: {date_str}</span>'
+                    f'<span>📍 {loc_str}</span>'
+                    f'<span>💰 {comp_str}</span>'
+                    f'<span>🤝 Referral: {ref_str}</span>'
+                    f'</div>'
+                    f'{notes_html}'
+                    f'</div>'
+                )
+                st.markdown(app_card_html, unsafe_allow_html=True)
                 
                 # Inline Stage Changer & Delete
                 ctrl_col1, ctrl_col2, ctrl_col3 = st.columns([2, 1, 3])

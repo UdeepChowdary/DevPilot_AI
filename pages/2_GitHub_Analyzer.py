@@ -491,27 +491,36 @@ if "gh_data" in st.session_state and "gh_audit" in st.session_state:
                 lic_badge = '<span class="badge-pass">✔ License</span>' if r["has_license"] else '<span class="badge-fail">✘ No License</span>'
                 topic_badge = '<span class="badge-pass">✔ Topics</span>' if r["has_topics"] else '<span class="badge-fail">✘ No Topics</span>'
 
-                demo_link_html = f'<a href="{r["homepage"]}" target="_blank" style="color: #22c55e; margin-left: 0.8rem; font-size: 0.85rem;">🔗 Open Live Demo</a>' if r["has_homepage"] else ""
+                r_name = html.escape(str(r.get("name") or ""))
+                r_url = r.get("html_url") or "#"
+                r_desc = html.escape(str(r.get("description") or "No description provided."))
+                r_lang = html.escape(str(r.get("language") or "Other"))
+                r_stars = r.get("stars", 0)
+                r_health = r.get("health_score", 0)
 
-                st.markdown(f"""
-<div class="repo-card">
-    <div style="display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap;">
-        <div>
-            <a class="repo-title" href="{r['html_url']}" target="_blank">{r['name']}</a>
-            {demo_link_html}
-        </div>
-        <div>
-            <span class="stat-pill">⭐ {r['stars']} stars</span>
-            <span class="stat-pill">{r['language']}</span>
-            <span class="stat-pill" style="border-color:#6366f1; color:#818cf8; font-weight:700;">Health: {r['health_score']}/100</span>
-        </div>
-    </div>
-    <div class="repo-desc">{r['description']}</div>
-    <div style="margin-top: 0.6rem;">
-        {desc_badge} &nbsp; {demo_badge} &nbsp; {lic_badge} &nbsp; {topic_badge}
-    </div>
-</div>
-""", unsafe_allow_html=True)
+                demo_link_html = (
+                    f' <a href="{html.escape(r["homepage"])}" target="_blank" style="color: #22c55e; margin-left: 0.8rem; font-size: 0.85rem;">🔗 Open Live Demo</a>'
+                    if (r.get("has_homepage") and r.get("homepage"))
+                    else ""
+                )
+
+                repo_card_html = (
+                    f'<div class="repo-card">'
+                    f'<div style="display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap;">'
+                    f'<div>'
+                    f'<a class="repo-title" href="{r_url}" target="_blank">{r_name}</a>{demo_link_html}'
+                    f'</div>'
+                    f'<div>'
+                    f'<span class="stat-pill">⭐ {r_stars} stars</span>'
+                    f'<span class="stat-pill">{r_lang}</span>'
+                    f'<span class="stat-pill" style="border-color:#6366f1; color:#818cf8; font-weight:700;">Health: {r_health}/100</span>'
+                    f'</div>'
+                    f'</div>'
+                    f'<div class="repo-desc">{r_desc}</div>'
+                    f'<div style="margin-top: 0.6rem;">{desc_badge} &nbsp; {demo_badge} &nbsp; {lic_badge} &nbsp; {topic_badge}</div>'
+                    f'</div>'
+                )
+                st.markdown(repo_card_html, unsafe_allow_html=True)
                 if r.get("suggestions"):
                     with st.expander(f"Recommended fixes for {r['name']}"):
                         for s in r["suggestions"]:
