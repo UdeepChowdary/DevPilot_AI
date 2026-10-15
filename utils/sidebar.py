@@ -71,6 +71,7 @@ def render_sidebar() -> None:
         st.page_link("pages/1_Resume_Analyzer.py", label="📄  Resume Analyzer", use_container_width=True)
         st.page_link("pages/2_GitHub_Analyzer.py", label="🐙  GitHub Profile Analyzer", use_container_width=True)
         st.page_link("pages/3_Mock_Interview.py", label="🎤  AI Mock Interview", use_container_width=True)
+        st.page_link("pages/4_LeetCode_Coach.py", label="🎯  LeetCode Coach", use_container_width=True)
 
         st.markdown("<div class='sidebar-gradient-divider'></div>", unsafe_allow_html=True)
 
@@ -79,8 +80,9 @@ def render_sidebar() -> None:
         resume_score = (resume_res.get("ats") or {}).get("total")
         github_score = (st.session_state.get("github_audit") or {}).get("total_score")
         interview_score = (st.session_state.get("interview_session") or {}).get("total_score")
+        leetcode_score = (st.session_state.get("leetcode_audit") or {}).get("total_score")
 
-        if resume_score is not None or github_score is not None or interview_score is not None:
+        if resume_score is not None or github_score is not None or interview_score is not None or leetcode_score is not None:
             st.markdown("**Your Scores**")
 
             if resume_score is not None:
@@ -112,6 +114,17 @@ def render_sidebar() -> None:
     <div class="sidebar-score-label">Mock Interview Readiness</div>
     <div style="font-size:1.6rem; font-weight:800; color:{color};">
         {interview_score}<span style="font-size:0.9rem; color:#64748b;">/100</span>
+    </div>
+</div>
+""", unsafe_allow_html=True)
+
+            if leetcode_score is not None:
+                color = "#22c55e" if leetcode_score >= 75 else "#eab308" if leetcode_score >= 50 else "#ef4444"
+                st.markdown(f"""
+<div class="sidebar-score-card">
+    <div class="sidebar-score-label">LeetCode Readiness</div>
+    <div style="font-size:1.6rem; font-weight:800; color:{color};">
+        {leetcode_score}<span style="font-size:0.9rem; color:#64748b;">/100</span>
     </div>
 </div>
 """, unsafe_allow_html=True)

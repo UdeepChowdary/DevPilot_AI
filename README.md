@@ -18,7 +18,7 @@
 
 [![Python](https://img.shields.io/badge/Python-3.10%2B-3776AB?style=for-the-badge&logo=python&logoColor=white)](https://www.python.org/)
 [![Streamlit](https://img.shields.io/badge/Streamlit-1.40%2B-FF4B4B?style=for-the-badge&logo=streamlit&logoColor=white)](https://streamlit.io/)
-[![Version](https://img.shields.io/badge/Version-2.0.0-6366F1?style=for-the-badge)](README.md)
+[![Version](https://img.shields.io/badge/Version-2.5.0-6366F1?style=for-the-badge)](README.md)
 [![Google Gemini](https://img.shields.io/badge/Google%20Gemini-2.0%20Flash-8E75B2?style=for-the-badge&logo=google&logoColor=white)](https://ai.google.dev/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-F59E0B?style=for-the-badge)](LICENSE)
 
@@ -26,6 +26,7 @@
   <a href="#resume-analyzer"><b>Resume Analyzer</b></a> •
   <a href="#github-profile-analyzer"><b>GitHub Profile Analyzer</b></a> •
   <a href="#ai-mock-interview"><b>AI Mock Interview</b></a> •
+  <a href="#leetcode-coach"><b>LeetCode Coach</b></a> •
   <a href="#modules-overview"><b>Modules Overview</b></a> •
   <a href="#getting-started"><b>Quick Start</b></a> •
   <a href="#project-structure"><b>Architecture</b></a> •
@@ -49,7 +50,7 @@
 | **Resume Analyzer** | Live | ATS scoring (0–100), layout-aware PDF/DOCX parsing, TF-IDF keyword match, 200+ skill taxonomy, Google XYZ bullet rewriter. |
 | **GitHub Profile Analyzer** | Live | Portfolio readiness score (0–100), repo documentation & license audit, language byte breakdown, and AI resume bullets. |
 | **AI Mock Interview** | Live | Resume-tailored behavioral & technical interview simulation, speech pacing analysis, 4-dimension scoring rubric, and exportable PDF audit. |
-| **LeetCode Coach** | Planned | Algorithmic topic radar, weak-pattern diagnostic, and automated weekly practice roadmaps. |
+| **LeetCode Coach** | Live | Algorithmic topic radar across 8 core pillars, weak-pattern diagnostic, curated company roadmaps, AI complexity optimizer, and PDF export. |
 | **Placement Dashboard** | Planned | Consolidated readiness scorecard, milestone tracker, and application pipeline manager. |
 
 ---
@@ -180,6 +181,50 @@ Evaluates candidate answers across **4 core dimensions** (25 pts each):
 
 ---
 
+## LeetCode Coach & Algorithmic Diagnostic
+
+The **LeetCode Coach** delivers deep algorithmic skill diagnostics, blind-spot detection, curated company roadmaps, and code complexity audits to help candidates ace technical coding rounds:
+
+### 1. Multi-Mode Ingestion & Public GraphQL Ingestion
+- **Live LeetCode Sync**: Ingests real-time problem-solving statistics, difficulty distributions, and topic submissions via the public LeetCode GraphQL API.
+- **Offline / Manual Fallback**: Allows candidates to manually configure solve counts or test sample profiles (e.g. *FAANG Ready (520+)*, *Mid-Level (220+)*, *Beginner (45+)*) without internet access.
+
+### 2. Algorithmic Readiness Score (0–100)
+Evaluates candidate problem-solving breadth and depth across **5 weighted dimensions**:
+- **Volume & Breadth (30 pts)**: Total solved count, difficulty weighting (Easy=1x, Medium=2.5x, Hard=5x).
+- **8-Pillar Algorithmic Balance (25 pts)**: Distribution across core DSA categories to prevent over-indexing on simple arrays.
+- **Advanced Data Structures (20 pts)**: Mastery of Graph Theory, Dynamic Programming, Trees, and Tries.
+- **Difficulty Ratio (15 pts)**: Ratio of Medium and Hard problems vs. total solved (target: $\ge 60\%$).
+- **Contest & Global Standing (10 pts)**: Global ranking percentile and contest performance.
+
+### 3. 8-Pillar Topic Radar & Blind-Spot Detection
+- Visualizes mastery across the **8 fundamental interview pillars**:
+  - *Arrays & Hashing*
+  - *Two Pointers & Sliding Window*
+  - *Linked Lists, Stacks & Queues*
+  - *Binary Search & Divide/Conquer*
+  - *Trees & Binary Search Trees*
+  - *Graphs, BFS & DFS*
+  - *Dynamic Programming & Greedy*
+  - *Backtracking, Bit Manipulation & Math*
+- Identifies **Strongest Foundations** and pinpoints **Vulnerable Blind Spots** with actionable advice.
+
+### 4. Curated Company Placement Roadmaps
+- **FAANG 75**: High-frequency, high-yield patterns covering the core 75 questions asked at Meta, Google, Amazon, and Apple.
+- **FinTech & Low-Latency Systems**: Priority focus on binary trees, graph algorithms, bit manipulation, and optimal cache-friendly data structures.
+- **Placement Sprint (Last 30 Days)**: High-yield medium problems to rapidly eliminate candidate blind spots before interview season.
+- Automatically prioritizes questions targeting the candidate's diagnosed weakest pillars.
+
+### 5. AI Code Complexity & Pattern Optimizer
+- Evaluates submitted code snippets for **Time & Space Complexity** ($O(N)$, $O(N \log N)$, $O(N^2)$, etc.).
+- Offline heuristic AST & pattern analyzer detects nested loops, recursion depth, auxiliary memory allocations, and sorting calls.
+- Google Gemini AI mode provides clean asymptotic derivation, code review notes, and optimal implementations.
+
+### 6. Exportable Algorithmic Audit Report (PDF)
+- 1-click download of a publication-grade PDF report generated via `fpdf2`, featuring overall score badge, 8-pillar mastery bars, key blind spots, and personalized roadmap problems.
+
+---
+
 ## Project Structure
 
 ```bash
@@ -189,7 +234,8 @@ DevPilot_AI/
 ├── pages/
 │   ├── 1_Resume_Analyzer.py    # Resume Analyzer UI & interactive workflows
 │   ├── 2_GitHub_Analyzer.py    # GitHub Profile Analyzer & Recruiter Auditor
-│   └── 3_Mock_Interview.py     # AI Mock Interview simulator & audio coach
+│   ├── 3_Mock_Interview.py     # AI Mock Interview simulator & audio coach
+│   └── 4_LeetCode_Coach.py     # LeetCode Coach & Algorithmic Diagnostic UI
 ├── utils/
 │   ├── __init__.py
 │   ├── resume_parser.py        # PDF, DOCX, TXT extraction & section detection
@@ -200,6 +246,7 @@ DevPilot_AI/
 │   ├── github_scorer.py        # 0–100 Portfolio readiness scoring & diagnostics
 │   ├── github_ai_reviewer.py   # Gemini AI portfolio coach & resume bullet generator
 │   ├── interview_coach.py      # Question generator, speech analyzer & answer rubric
+│   ├── leetcode_coach.py       # LeetCode GraphQL fetcher, 8-pillar auditor & complexity engine
 │   ├── pdf_generator.py        # Professional PDF report exporter (fpdf2)
 │   ├── sidebar.py              # Shared sidebar navigation & session scorecards
 │   └── gemini_client.py        # Google Gemini API connector
@@ -207,6 +254,7 @@ DevPilot_AI/
 │   ├── test_ats_scorer.py      # ATS scoring unit & integration tests
 │   ├── test_github_scorer.py   # GitHub audit & portfolio scoring tests
 │   ├── test_interview_coach.py # Mock interview question & rubric evaluation tests
+│   ├── test_leetcode_coach.py  # LeetCode auditor, radar, roadmap & complexity tests
 │   └── test_resume_parser.py   # Text extraction & section parsing tests
 └── LICENSE                     # MIT License
 ```
@@ -260,10 +308,12 @@ Open your browser at `http://localhost:8501`.
 - [x] **v1.0**: Resume Analyzer (ATS Scoring, Keyword Matching, Multi-engine Bullets, PDF/DOCX Support, Report Exporter)
 - [x] **v1.1**: GitHub Profile Analyzer (Portfolio scoring, repo health audit, tech stack breakdown, AI resume bullets)
 - [x] **v2.0**: AI Mock Interview (Resume-tailored questions, audio recording & transcription, 4-dimension scoring, pacing analysis, PDF export)
-- [ ] **v2.5**: LeetCode Algorithmic Coach & Placement Readiness Tracker
+- [x] **v2.5**: LeetCode Algorithmic Coach & Placement Readiness Tracker
+- [ ] **v3.0**: Placement Readiness Dashboard & Application Pipeline Manager
 
 ---
 
 ## License
 
 This project is licensed under the MIT License — see the [LICENSE](LICENSE) file for details.
+

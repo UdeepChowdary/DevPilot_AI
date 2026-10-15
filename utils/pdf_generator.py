@@ -719,3 +719,121 @@ def generate_interview_pdf(session: dict) -> bytes:
 
     return bytes(pdf.output())
 
+
+# ---------------------------------------------------------------------------
+# LeetCode Coach PDF
+# ---------------------------------------------------------------------------
+
+def generate_leetcode_pdf(stats: dict, audit: dict, roadmap: list = None) -> bytes:
+    """
+    Generate a styled PDF report for the LeetCode Algorithmic Coach & Diagnostic.
+
+    Args:
+        stats: Dict of user problem-solving stats from fetch_leetcode_stats()
+        audit: Dict returned by audit_algorithmic_readiness()
+        roadmap: List of prioritized practice problems
+    Returns:
+        bytes -- the raw PDF binary ready for download
+    """
+    username = _clean(stats.get("username", "Candidate"))
+    score = audit.get("total_score", 0)
+    grade = _clean(audit.get("grade", "Candidate"))
+    verdict = _clean(audit.get("verdict", ""))
+    dims = audit.get("dimensions", {})
+    pillars = stats.get("pillar_counts", {})
+
+    pdf = _DevPilotPDF(f"LeetCode Diagnostic -- @{username}")
+    pdf.add_page()
+
+    # Title & Profile
+    pdf.set_font("Helvetica", "B", 18)
+    pdf.set_text_color(*_Color.BG_DARK)
+    pdf.cell(0, 10, f"Algorithmic Readiness Audit: @{username}", new_x=XPos.LMARGIN, new_y=YPos.NEXT)
+
+    pdf.set_font("Helvetica", "", 10)
+    pdf.set_text_color(*_Color.GRAY_500)
+    rank_str = f"Global Rank: #{stats.get('ranking', 0):,}" if stats.get("ranking") else "Unranked"
+    pdf.cell(0, 6, f"Total Solved: {stats.get('total_solved', 0)} (Easy: {stats.get('easy_solved', 0)}, Med: {stats.get('medium_solved', 0)}, Hard: {stats.get('hard_solved', 0)})  |  {rank_str}",
+             new_x=XPos.LMARGIN, new_y=YPos.NEXT)
+    pdf.ln(3)
+
+    pdf.score_badge(score, label=grade)
+    pdf.ln(4)
+
+    # Diagnostic Verdict
+    pdf.section_title("Algorithmic Assessment Verdict")
+    pdf.body(verdict)
+    pdf.ln(2)
+
+    # Score Dimensions
+    pdf.section_title("Evaluation Dimensions")
+    for dim in dims.values():
+        pdf.progress_bar(_clean(dim["label"]), int(dim["score"]), dim["max"])
+    pdf.ln(2)
+
+    # Strengths & Blind Spots
+    if audit.get("strengths"):
+        pdf.section_title("Algorithmic Strengths")
+        for s in audit["strengths"]:
+            pdf.bullet_item(s, color=_Color.GREEN, prefix="+")
+        pdf.ln(2)
+
+    if audit.get("blind_spots"):
+        pdf.section_title("Critical Blind Spots & Gap Analysis")
+        for b in audit["blind_spots"]:
+            pdf.bullet_item(b, color=_Color.RED, prefix="!")
+        pdf.ln(2)
+
+    # 8 Core Algorithmic Pillars Breakdown
+    if pdf.get_y() > 40:
+        pdf.add_page()
+    pdf.section_title("8 Core Algorithmic Pillars Breakdown")
+    pdf.caption("Target benchmark: ~25 problems per pillar for balanced Tier-1 interview readiness.")
+    pdf.ln(2)
+
+    for p_name, count in pillars.items():
+        norm_val = min(round((count / 25.0) * 100), 100)
+        pdf.progress_bar(f"{p_name} ({count} solved)", norm_val, 100)
+    pdf.ln(2)
+
+    # Prioritized Practice Roadmap
+    if roadmap:
+        if pdf.get_y() > 180:
+            pdf.add_page()
+        pdf.section_title("Prioritized Practice Roadmap")
+        pdf.caption("Targeted problems selected to close your specific algorithmic blind spots.")
+        pdf.ln(2)
+
+        for i, prob in enumerate(roadmap[:10], 1):
+            if pdf.get_y() > 250:
+                pdf.add_page()
+
+            p_diff = prob.get("difficulty", "Medium")
+            d_color = _Color.GREEN if p_diff == "Easy" else _Color.ORANGE if p_diff == "Medium" else _Color.RED
+            bx, by = pdf.get_x(), pdf.get_y()
+
+            pdf.set_fill_color(245, 245, 252)
+            pdf.rect(bx, by, 174, 12, style="F")
+            pdf.set_fill_color(*d_color)
+            pdf.rect(bx, by, 3, 12, style="F")
+
+            pdf.set_font("Helvetica", "B", 9)
+            pdf.set_text_color(*_Color.BG_DARK)
+            pdf.set_xy(bx + 5, by + 2)
+            pdf.cell(110, 5, _clean(f"{i}. {prob.get('name')} ({prob.get('pillar')})"), new_x=XPos.RIGHT, new_y=YPos.TOP)
+
+            pdf.set_font("Helvetica", "B", 8)
+            pdf.set_text_color(*d_color)
+            pdf.set_xy(bx + 120, by + 2)
+            pdf.cell(50, 5, p_diff, align="R", new_x=XPos.LMARGIN, new_y=YPos.NEXT)
+
+            pdf.set_font("Helvetica", "I", 7.5)
+            pdf.set_text_color(*_Color.GRAY_500)
+            pdf.set_xy(bx + 5, by + 7)
+            pdf.cell(0, 4, _clean(f"Pattern Insight: {prob.get('pattern')}"), new_x=XPos.LMARGIN, new_y=YPos.NEXT)
+
+            pdf.set_xy(bx, by + 14)
+
+    return bytes(pdf.output())
+
+

@@ -265,8 +265,9 @@ modules = [
     {
         "icon": "🎯",
         "title": "LeetCode Coach",
-        "desc": "Track coding progress, identify weak algorithmic topics, and generate targeted practice plans.",
-        "status": "soon",
+        "desc": "Algorithmic topic radar, weak-pattern diagnostics, curated company roadmaps, and AI code complexity optimization.",
+        "status": "live",
+        "page": "pages/4_LeetCode_Coach.py",
     },
     {
         "icon": "📊",
