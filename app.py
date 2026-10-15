@@ -12,18 +12,16 @@ st.set_page_config(
 
 st.markdown("""
 <style>
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
-* { font-family: 'Inter', sans-serif; }
-
 /* ── Hero ──────────────────────────────────────────────────────── */
 .hero-main {
-    background: linear-gradient(135deg, #0f0c29 0%, #302b63 50%, #24243e 100%);
+    background: linear-gradient(135deg, #090d16 0%, #151b2e 50%, #1e1b4b 100%);
     border-radius: 20px;
-    padding: 3.2rem 3rem;
+    padding: 3rem 2.8rem;
     margin-bottom: 2rem;
     position: relative;
     overflow: hidden;
-    border: 1px solid rgba(99, 102, 241, 0.25);
+    border: 1px solid rgba(99, 102, 241, 0.28);
+    box-shadow: 0 20px 40px -15px rgba(0, 0, 0, 0.7);
 }
 .hero-main::before {
     content: '';
@@ -48,152 +46,187 @@ st.markdown("""
     pointer-events: none;
 }
 .hero-main h1 {
+    font-family: 'Sora', sans-serif !important;
     font-size: 2.8rem;
     font-weight: 800;
     color: white;
-    margin: 0 0 0.75rem 0;
+    margin: 0 0 0.6rem 0;
+    letter-spacing: -0.03em;
     line-height: 1.15;
     position: relative;
     z-index: 1;
 }
 .hero-accent {
-    width: 60px;
-    height: 4px;
+    width: 55px;
+    height: 3px;
     background: linear-gradient(90deg, #6366f1, #a855f7);
     border-radius: 2px;
-    margin-bottom: 1rem;
+    margin-bottom: 1.1rem;
     position: relative;
     z-index: 1;
 }
 .hero-main .tagline {
-    font-size: 1.1rem;
-    color: rgba(255,255,255,0.8);
-    margin: 0 0 1.5rem 0;
-    max-width: 650px;
-    line-height: 1.6;
+    font-size: 1.08rem;
+    color: #cbd5e1;
+    margin: 0 0 1.6rem 0;
+    max-width: 680px;
+    line-height: 1.65;
     position: relative;
     z-index: 1;
 }
 .hero-stats {
     display: flex;
+    flex-wrap: wrap;
     gap: 2rem;
-    margin-bottom: 1.5rem;
+    margin-bottom: 1.6rem;
     position: relative;
     z-index: 1;
 }
 .hero-stat {
-    text-align: center;
+    text-align: left;
 }
 .hero-stat .stat-num {
-    font-size: 1.6rem;
+    font-family: 'JetBrains Mono', monospace !important;
+    font-size: 1.75rem;
     font-weight: 800;
-    color: #a78bfa;
+    color: #c4b5fd;
     display: block;
     line-height: 1;
+    letter-spacing: -0.02em;
 }
 .hero-stat .stat-label {
-    font-size: 0.75rem;
-    color: rgba(255,255,255,0.55);
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.72rem;
+    color: #94a3b8;
     text-transform: uppercase;
-    letter-spacing: 0.05em;
+    letter-spacing: 0.08em;
     display: block;
-    margin-top: 0.2rem;
+    margin-top: 0.35rem;
 }
 .hero-divider {
     width: 1px;
-    background: rgba(255,255,255,0.15);
+    background: rgba(255,255,255,0.12);
     align-self: stretch;
 }
 .badge-row { position: relative; z-index: 1; }
 .badge {
     display: inline-block;
-    background: rgba(99,102,241,0.2);
-    border: 1px solid rgba(99,102,241,0.4);
-    color: #818cf8;
+    background: rgba(99,102,241,0.14);
+    border: 1px solid rgba(99,102,241,0.32);
+    color: #a5b4fc;
     border-radius: 20px;
-    padding: 0.35rem 0.95rem;
-    font-size: 0.82rem;
+    padding: 0.32rem 0.9rem;
+    font-size: 0.8rem;
     font-weight: 600;
     margin-right: 0.5rem;
     margin-bottom: 0.4rem;
-    transition: background 0.2s ease, border-color 0.2s ease;
+    transition: all 0.2s ease;
 }
 .badge:hover {
-    background: rgba(99,102,241,0.35);
-    border-color: rgba(99,102,241,0.7);
+    background: rgba(99,102,241,0.25);
+    border-color: rgba(99,102,241,0.6);
+    color: #ffffff;
 }
 
 /* ── Module Cards ──────────────────────────────────────────────── */
 .module-card {
-    background: linear-gradient(135deg, #1e1e2e, #1a1a2e);
+    background: linear-gradient(145deg, #131726 0%, #0e111d 100%);
     border: 1px solid rgba(99,102,241,0.2);
     border-radius: 16px;
     padding: 1.6rem;
     margin-bottom: 0.8rem;
-    transition: all 0.25s ease-in-out;
+    transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
     cursor: default;
-    height: 260px;
+    min-height: 250px;
     display: flex;
     flex-direction: column;
 }
 .module-card:hover {
-    border-color: rgba(99,102,241,0.55);
-    box-shadow: 0 8px 28px rgba(99,102,241,0.15);
-    transform: translateY(-3px);
+    border-color: rgba(99,102,241,0.48);
+    box-shadow: 0 16px 32px -8px rgba(0, 0, 0, 0.6), 0 0 0 1px rgba(99, 102, 241, 0.35);
+    transform: translateY(-4px);
 }
 .module-card.soon {
     opacity: 0.75;
 }
-.module-icon { font-size: 2.2rem; margin-bottom: 0.6rem; }
-.module-title { font-size: 1.1rem; font-weight: 700; color: white; margin-bottom: 0.4rem; }
-.module-desc  { font-size: 0.86rem; color: #94a3b8; line-height: 1.55; flex-grow: 1; }
+.module-icon-wrap {
+    width: 46px;
+    height: 46px;
+    border-radius: 12px;
+    background: rgba(99, 102, 241, 0.12);
+    border: 1px solid rgba(99, 102, 241, 0.25);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.5rem;
+    margin-bottom: 0.9rem;
+}
+.module-title {
+    font-family: 'Sora', sans-serif !important;
+    font-size: 1.12rem;
+    font-weight: 700;
+    color: #ffffff;
+    margin-bottom: 0.45rem;
+    letter-spacing: -0.01em;
+}
+.module-desc  {
+    font-size: 0.86rem;
+    color: #94a3b8;
+    line-height: 1.6;
+    flex-grow: 1;
+}
 .module-status-live {
+    font-family: 'JetBrains Mono', monospace;
     display: inline-block;
-    background: rgba(34,197,94,0.15);
-    color: #22c55e;
+    background: rgba(34,197,94,0.12);
+    color: #4ade80;
     border: 1px solid rgba(34,197,94,0.3);
     border-radius: 20px;
     padding: 0.2rem 0.65rem;
-    font-size: 0.74rem;
+    font-size: 0.72rem;
     font-weight: 600;
-    margin-top: 0.75rem;
+    margin-top: 0.85rem;
+    width: fit-content;
 }
 .module-status-soon {
+    font-family: 'JetBrains Mono', monospace;
     display: inline-block;
     background: rgba(100,116,139,0.15);
-    color: #64748b;
-    border: 1px solid rgba(100,116,139,0.2);
+    color: #94a3b8;
+    border: 1px solid rgba(100,116,139,0.25);
     border-radius: 20px;
     padding: 0.2rem 0.65rem;
-    font-size: 0.74rem;
+    font-size: 0.72rem;
     font-weight: 600;
-    margin-top: 0.75rem;
+    margin-top: 0.85rem;
+    width: fit-content;
 }
 
 /* ── Stack chips ───────────────────────────────────────────────── */
 .stack-chip {
+    font-family: 'JetBrains Mono', monospace;
     display: inline-block;
-    background: rgba(15,12,41,0.6);
+    background: rgba(15,18,30,0.7);
     border: 1px solid rgba(99,102,241,0.2);
     color: #94a3b8;
-    border-radius: 8px;
-    padding: 0.35rem 0.85rem;
-    font-size: 0.8rem;
+    border-radius: 6px;
+    padding: 0.35rem 0.8rem;
+    font-size: 0.78rem;
     margin: 0.25rem;
-    transition: border-color 0.2s ease, color 0.2s ease;
+    transition: all 0.2s ease;
 }
 .stack-chip:hover {
-    border-color: rgba(99,102,241,0.5);
+    border-color: rgba(99,102,241,0.55);
     color: #c4b5fd;
+    background: rgba(99,102,241,0.1);
 }
 
 /* ── Gradient divider ──────────────────────────────────────────── */
 .gradient-divider {
     height: 1px;
     background: linear-gradient(90deg, transparent, rgba(99,102,241,0.35), transparent);
-    margin: 1.5rem 0;
+    margin: 1.6rem 0;
 }
-
 </style>
 """, unsafe_allow_html=True)
 
@@ -289,7 +322,7 @@ for i, mod in enumerate(modules):
         card_class = "module-card" if mod["status"] == "live" else "module-card soon"
         st.markdown(f"""
 <div class="{card_class}">
-    <div class="module-icon">{mod["icon"]}</div>
+    <div class="module-icon-wrap">{mod["icon"]}</div>
     <div class="module-title">{mod["title"]}</div>
     <div class="module-desc">{mod["desc"]}</div>
     {status_html}
@@ -312,6 +345,6 @@ st.markdown(chips, unsafe_allow_html=True)
 
 st.markdown("<br>", unsafe_allow_html=True)
 st.markdown(
-    "<p style='color:#64748b; font-size:0.85rem; text-align:center;'>DevPilot AI • Built for software engineering students</p>",
+    "<p style='color:#64748b; font-size:0.85rem; text-align:center;'>DevPilot AI <span style='color:#818cf8; font-weight:600;'>v3.1.0</span> • Built for software engineering students</p>",
     unsafe_allow_html=True,
 )

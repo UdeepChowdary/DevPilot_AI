@@ -34,81 +34,116 @@ render_sidebar()
 # ─── Custom CSS ───────────────────────────────────────────────────────────────
 st.markdown("""
 <style>
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
-* { font-family: 'Inter', sans-serif; }
-
 .hero-github {
-    background: linear-gradient(135deg, #3b0764 0%, #a855f7 100%);
-    border-radius: 16px;
-    padding: 2.2rem 2.4rem;
+    background: linear-gradient(135deg, #0d0b1d 0%, #1a103c 50%, #2e1065 100%);
+    border-radius: 18px;
+    padding: 2.4rem 2.6rem;
     margin-bottom: 1.8rem;
-    border: 1px solid rgba(168, 85, 247, 0.4);
+    border: 1px solid rgba(168, 85, 247, 0.35);
     color: white;
     position: relative;
     overflow: hidden;
+    box-shadow: 0 16px 36px -12px rgba(0, 0, 0, 0.7);
 }
 .hero-github::before {
     content: '';
     position: absolute;
     top: -40%;
     right: -5%;
-    width: 300px;
-    height: 300px;
+    width: 320px;
+    height: 320px;
     background: radial-gradient(circle, rgba(168,85,247,0.2) 0%, transparent 70%);
     border-radius: 50%;
     pointer-events: none;
 }
-.hero-github h1 { font-size: 2.2rem; font-weight: 800; margin: 0 0 0.4rem 0; position: relative; z-index: 1; }
-.hero-accent { width: 50px; height: 3px; background: linear-gradient(90deg, #6366f1, #a855f7); border-radius: 2px; margin-bottom: 0.75rem; position: relative; z-index: 1; }
-.hero-github p  { font-size: 0.95rem; color: #8b949e; margin: 0; line-height: 1.6; position: relative; z-index: 1; }
+.hero-github h1 {
+    font-family: 'Sora', sans-serif !important;
+    font-size: 2.3rem;
+    font-weight: 800;
+    margin: 0 0 0.5rem 0;
+    letter-spacing: -0.02em;
+    position: relative;
+    z-index: 1;
+}
+.hero-accent {
+    width: 50px;
+    height: 3px;
+    background: linear-gradient(90deg, #6366f1, #a855f7);
+    border-radius: 2px;
+    margin-bottom: 0.9rem;
+    position: relative;
+    z-index: 1;
+}
+.hero-github p {
+    font-size: 1rem;
+    color: #e9d5ff;
+    margin: 0;
+    line-height: 1.6;
+    position: relative;
+    z-index: 1;
+}
 
 .input-box-card {
-    background: #161b22;
-    border: 1px solid #30363d;
+    background: linear-gradient(145deg, #131726, #0e111d);
+    border: 1px solid rgba(255, 255, 255, 0.1);
     border-radius: 14px;
-    padding: 1.5rem;
+    padding: 1.6rem;
     margin-bottom: 1.5rem;
 }
 
 .profile-card {
-    background: linear-gradient(135deg, #161b22, #0d1117);
-    border: 1px solid #30363d;
+    background: linear-gradient(135deg, #131726, #0d111a);
+    border: 1px solid rgba(255, 255, 255, 0.1);
     border-radius: 16px;
     padding: 1.8rem;
     color: #c9d1d9;
     margin-bottom: 1.5rem;
 }
-.profile-name { font-size: 1.6rem; font-weight: 700; color: #f0f6fc; margin: 0; }
-.profile-login { font-size: 1rem; color: #8b949e; margin-bottom: 0.8rem; }
-.profile-bio { font-size: 0.92rem; color: #e6edf3; line-height: 1.5; margin-bottom: 1rem; }
+.profile-name {
+    font-family: 'Sora', sans-serif !important;
+    font-size: 1.6rem;
+    font-weight: 700;
+    color: #f0f6fc;
+    margin: 0;
+}
+.profile-login {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.95rem;
+    color: #94a3b8;
+    margin-bottom: 0.8rem;
+}
+.profile-bio { font-size: 0.92rem; color: #e6edf3; line-height: 1.55; margin-bottom: 1rem; }
 
 .stat-pill {
+    font-family: 'JetBrains Mono', monospace;
     display: inline-block;
     background: rgba(110, 118, 129, 0.15);
-    border: 1px solid #30363d;
+    border: 1px solid rgba(255, 255, 255, 0.12);
     border-radius: 20px;
     padding: 0.3rem 0.8rem;
-    font-size: 0.82rem;
+    font-size: 0.78rem;
     color: #e6edf3;
     margin-right: 0.5rem;
     margin-bottom: 0.4rem;
 }
 
 .badge-pass {
+    font-family: 'JetBrains Mono', monospace;
     display: inline-block;
-    background: rgba(35, 134, 54, 0.2);
+    background: rgba(35, 134, 54, 0.18);
     border: 1px solid #238636;
-    color: #3fb950;
+    color: #4ade80;
     border-radius: 6px;
     padding: 0.15rem 0.55rem;
     font-size: 0.72rem;
     font-weight: 600;
 }
 .badge-fail {
+    font-family: 'JetBrains Mono', monospace;
     display: inline-block;
-    background: rgba(218, 54, 51, 0.15);
+    background: rgba(218, 54, 51, 0.18);
     border: 1px solid #da3633;
-    color: #f85149;
+    color: #f87171;
     border-radius: 6px;
     padding: 0.15rem 0.55rem;
     font-size: 0.72rem;
@@ -116,43 +151,49 @@ st.markdown("""
 }
 
 .repo-card {
-    background: #161b22;
-    border: 1px solid #30363d;
+    background: linear-gradient(145deg, #131726, #0e111d);
+    border: 1px solid rgba(255, 255, 255, 0.08);
     border-radius: 12px;
     padding: 1.3rem;
     margin-bottom: 1rem;
-    transition: all 0.2s ease-in-out;
+    transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
 }
 .repo-card:hover {
-    border-color: #58a6ff;
-    box-shadow: 0 4px 16px rgba(88, 166, 255, 0.1);
+    border-color: rgba(99, 102, 241, 0.5);
+    box-shadow: 0 8px 24px -4px rgba(0, 0, 0, 0.5);
+    transform: translateY(-2px);
 }
-.repo-title { font-size: 1.1rem; font-weight: 700; color: #58a6ff; text-decoration: none; }
-.repo-desc { font-size: 0.88rem; color: #8b949e; margin: 0.5rem 0 0.8rem 0; line-height: 1.5; }
+.repo-title {
+    font-family: 'Sora', sans-serif !important;
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: #818cf8;
+    text-decoration: none;
+}
+.repo-desc { font-size: 0.88rem; color: #94a3b8; margin: 0.5rem 0 0.8rem 0; line-height: 1.55; }
 
 .checklist-card {
-    background: #161b22;
-    border-left: 4px solid #6366f1;
-    border-radius: 8px;
+    background: linear-gradient(145deg, #131726, #0e111d);
+    border: 1px solid rgba(99, 102, 241, 0.25);
+    border-radius: 10px;
     padding: 1rem 1.2rem;
-    margin-bottom: 0.8rem;
+    margin-bottom: 0.85rem;
     color: #e6edf3;
 }
 .checklist-card-high {
-    background: #161b22;
-    border-left: 4px solid #ef4444;
-    border-radius: 8px;
+    background: linear-gradient(145deg, rgba(239, 68, 68, 0.08), #131726);
+    border: 1px solid rgba(239, 68, 68, 0.35);
+    border-radius: 10px;
     padding: 1rem 1.2rem;
-    margin-bottom: 0.8rem;
+    margin-bottom: 0.85rem;
     color: #e6edf3;
 }
 
 .bullet-box {
-    background: #161b22;
-    border: 1px solid #30363d;
-    border-left: 4px solid #a855f7;
-    border-radius: 10px;
-    padding: 1.2rem;
+    background: linear-gradient(145deg, rgba(168, 85, 247, 0.06), #131726);
+    border: 1px solid rgba(168, 85, 247, 0.3);
+    border-radius: 12px;
+    padding: 1.2rem 1.4rem;
     margin-bottom: 1.2rem;
 }
 
@@ -579,20 +620,40 @@ if "gh_data" in st.session_state and "gh_audit" in st.session_state:
         st.markdown("### AI Recruiter Assessment & Resume Bullet Generator")
         st.caption("Converts GitHub projects directly into quantified Google XYZ resume bullet points.")
 
+        gh_engine_choice = st.radio(
+            "Select AI Reviewer Engine:",
+            options=["hf", "gemini", "rule_based"],
+            format_func=lambda x: {
+                "hf": "🤗 Hugging Face Local Neural Engine (100% Offline, No Key Needed)",
+                "gemini": "✨ Google Gemini 2.0 Flash (Online Cloud LLM, API Key)",
+                "rule_based": "⚡ Fast Heuristic Rule Engine (Instant)",
+            }[x],
+            horizontal=True,
+            index=0,
+            key="gh_engine_selector",
+        )
+
         ai_key_to_use = gemini_key_input.strip() if gemini_key_input else None
 
-        # Button to generate / refresh critique
-        if st.session_state.get("gh_ai_critique") is None:
-            if st.button("Generate AI Recruiter Critique & Resume Bullets", type="primary"):
-                with st.spinner("Analyzing portfolio repositories with AI Recruiter Engine..."):
-                    critique = generate_ai_critique(gh_data, audit, api_key=ai_key_to_use)
-                    st.session_state["gh_ai_critique"] = critique
+        c_btn_col1, c_btn_col2 = st.columns([2, 1])
+        with c_btn_col1:
+            trigger_critique = st.button("Generate AI Recruiter Critique & Resume Bullets", type="primary", use_container_width=True)
+        with c_btn_col2:
+            if st.session_state.get("gh_ai_critique"):
+                if st.button("🔄 Regenerate Critique", use_container_width=True):
+                    st.session_state["gh_ai_critique"] = None
                     st.rerun()
+
+        if trigger_critique:
+            with st.spinner(f"Analyzing portfolio repositories with {gh_engine_choice.upper()} Engine..."):
+                critique = generate_ai_critique(gh_data, audit, api_key=ai_key_to_use, engine=gh_engine_choice)
+                st.session_state["gh_ai_critique"] = critique
+                st.rerun()
 
         critique = st.session_state.get("gh_ai_critique")
         if critique:
-            gen_tag = "🤖 Generated via Google Gemini AI" if critique.get("is_ai_generated") else "Generated via Built-in Rule Engine (Offline)"
-            st.caption(f"*{gen_tag}*")
+            engine_name = critique.get("ai_engine", "Google Gemini AI" if critique.get("is_ai_generated") else "Built-in Rule Engine (Offline)")
+            st.caption(f"*🤖 Engine: {engine_name}*")
 
             st.markdown("#### Executive Recruiter Summary")
             st.info(critique.get("executive_summary", ""))
@@ -624,7 +685,7 @@ if "gh_data" in st.session_state and "gh_audit" in st.session_state:
 
             st.markdown("<br>", unsafe_allow_html=True)
             st.markdown("#### Recommended Capstone Project to Build Next")
-            st.success(f"**Strategic Recommendation:** {critique.get('capstone_recommendation', '')}", icon="")
+            st.success(f"**Strategic Recommendation:** {critique.get('capstone_recommendation', '')}", icon="💡")
 
             if critique.get("interview_talking_points"):
                 st.markdown("<br>", unsafe_allow_html=True)

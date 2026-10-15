@@ -18,7 +18,8 @@
 
 [![Python](https://img.shields.io/badge/Python-3.10%2B-3776AB?style=for-the-badge&logo=python&logoColor=white)](https://www.python.org/)
 [![Streamlit](https://img.shields.io/badge/Streamlit-1.40%2B-FF4B4B?style=for-the-badge&logo=streamlit&logoColor=white)](https://streamlit.io/)
-[![Version](https://img.shields.io/badge/Version-3.0.1-6366F1?style=for-the-badge)](README.md)
+[![Version](https://img.shields.io/badge/Version-3.1.0-6366F1?style=for-the-badge)](README.md)
+[![HuggingFace](https://img.shields.io/badge/HuggingFace-Transformers-FFD21E?style=for-the-badge&logo=huggingface&logoColor=black)](https://huggingface.co/)
 [![Google Gemini](https://img.shields.io/badge/Google%20Gemini-2.0%20Flash-8E75B2?style=for-the-badge&logo=google&logoColor=white)](https://ai.google.dev/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-F59E0B?style=for-the-badge)](LICENSE)
 
@@ -40,7 +41,7 @@
 
 ## About DevPilot AI
 
-**DevPilot AI** is an all-in-one NLP and AI-powered suite built for software engineering students and job candidates preparing for technical internships and placement seasons. DevPilot AI combines **100% offline heuristic ML engines** with optional **Google Gemini AI intelligence** to deliver actionable, transparent, and accurate career tools.
+**DevPilot AI** is an all-in-one NLP and AI-powered suite built for software engineering students and job candidates preparing for technical internships and placement seasons. DevPilot AI combines **100% offline heuristic ML engines**, **local Hugging Face Transformers neural models**, and optional **Google Gemini AI intelligence** to deliver actionable, transparent, and accurate career tools.
 
 ---
 
@@ -366,6 +367,7 @@ Open your browser at `http://localhost:8501`.
 - [x] **v2.5**: LeetCode Algorithmic Coach & Placement Readiness Tracker
 - [x] **v3.0**: Placement Readiness Dashboard & Application Pipeline Manager
 - [x] **v3.0.1**: Patch Release — UI bug fixes in GitHub health audit & placement pipeline rendering, HTML sanitization, and configuration documentation
+- [x] **v3.1.0**: Hugging Face Local Neural Engine across all 5 modules (T5 bullet rewriter, neural elevator pitches, STAR interview scoring, AST code complexity analysis, neural career strategy) & complete design system refresh (JetBrains Mono / Sora typography, glassmorphism UI, unified tokens)
 
 ---
 

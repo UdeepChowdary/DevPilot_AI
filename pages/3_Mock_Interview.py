@@ -38,103 +38,127 @@ render_sidebar()
 # ─── Custom CSS ───────────────────────────────────────────────────────────────
 st.markdown("""
 <style>
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
-* { font-family: 'Inter', sans-serif; }
-
 .hero-interview {
-    background: linear-gradient(135deg, #1e1b4b 0%, #312e81 50%, #4338ca 100%);
-    border-radius: 16px;
-    padding: 2.2rem 2.4rem;
+    background: linear-gradient(135deg, #090d16 0%, #151b2e 50%, #1e1b4b 100%);
+    border-radius: 18px;
+    padding: 2.4rem 2.6rem;
     margin-bottom: 1.8rem;
-    border: 1px solid rgba(99, 102, 241, 0.4);
+    border: 1px solid rgba(99, 102, 241, 0.35);
     color: white;
     position: relative;
     overflow: hidden;
+    box-shadow: 0 16px 36px -12px rgba(0, 0, 0, 0.7);
 }
 .hero-interview::before {
     content: '';
     position: absolute;
     top: -40%;
     right: -5%;
-    width: 300px;
-    height: 300px;
+    width: 320px;
+    height: 320px;
     background: radial-gradient(circle, rgba(168,85,247,0.2) 0%, transparent 70%);
     border-radius: 50%;
     pointer-events: none;
 }
-.hero-interview h1 { font-size: 2.2rem; font-weight: 800; margin: 0 0 0.4rem 0; position: relative; z-index: 1; }
-.hero-accent { width: 50px; height: 3px; background: linear-gradient(90deg, #6366f1, #a855f7); border-radius: 2px; margin-bottom: 0.75rem; position: relative; z-index: 1; }
-.hero-interview p  { font-size: 0.95rem; color: #c7d2fe; margin: 0; line-height: 1.6; position: relative; z-index: 1; }
+.hero-interview h1 {
+    font-family: 'Sora', sans-serif !important;
+    font-size: 2.3rem;
+    font-weight: 800;
+    margin: 0 0 0.5rem 0;
+    letter-spacing: -0.02em;
+    position: relative;
+    z-index: 1;
+}
+.hero-accent {
+    width: 50px;
+    height: 3px;
+    background: linear-gradient(90deg, #6366f1, #a855f7);
+    border-radius: 2px;
+    margin-bottom: 0.9rem;
+    position: relative;
+    z-index: 1;
+}
+.hero-interview p {
+    font-size: 1rem;
+    color: #cbd5e1;
+    margin: 0;
+    line-height: 1.6;
+    position: relative;
+    z-index: 1;
+}
 
 .question-card {
-    background: linear-gradient(135deg, #1e1e2e, #161b22);
-    border: 1px solid rgba(99, 102, 241, 0.3);
-    border-left: 5px solid #6366f1;
-    border-radius: 14px;
-    padding: 1.6rem;
+    background: linear-gradient(145deg, #131726, #0e111d);
+    border: 1px solid rgba(99, 102, 241, 0.28);
+    border-radius: 16px;
+    padding: 1.8rem;
     margin-bottom: 1.5rem;
     color: #f8fafc;
+    box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.5);
 }
 .question-category {
+    font-family: 'JetBrains Mono', monospace;
     display: inline-block;
-    background: rgba(99,102,241,0.2);
+    background: rgba(99,102,241,0.18);
     color: #a5b4fc;
-    border: 1px solid rgba(99,102,241,0.4);
+    border: 1px solid rgba(99,102,241,0.35);
     border-radius: 20px;
     padding: 0.2rem 0.75rem;
     font-size: 0.76rem;
     font-weight: 600;
     margin-bottom: 0.8rem;
     text-transform: uppercase;
-    letter-spacing: 0.05em;
+    letter-spacing: 0.06em;
 }
 .question-text {
+    font-family: 'Sora', sans-serif !important;
     font-size: 1.25rem;
     font-weight: 700;
     line-height: 1.5;
     color: #ffffff;
     margin-bottom: 0.8rem;
+    letter-spacing: -0.01em;
 }
 .question-context {
-    font-size: 0.86rem;
+    font-size: 0.88rem;
     color: #94a3b8;
-    line-height: 1.5;
+    line-height: 1.55;
 }
 
 .feedback-card {
-    background: #161b22;
-    border: 1px solid #30363d;
-    border-radius: 12px;
-    padding: 1.5rem;
+    background: linear-gradient(145deg, #131726, #0e111d);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 14px;
+    padding: 1.6rem;
     margin-top: 1.2rem;
     margin-bottom: 1.5rem;
 }
 
 .ideal-answer-box {
-    background: rgba(99,102,241,0.08);
-    border: 1px solid rgba(99,102,241,0.25);
-    border-left: 4px solid #a855f7;
-    border-radius: 8px;
-    padding: 1.2rem;
+    background: linear-gradient(145deg, rgba(168, 85, 247, 0.08), rgba(99, 102, 241, 0.05));
+    border: 1px solid rgba(168, 85, 247, 0.3);
+    border-radius: 12px;
+    padding: 1.3rem 1.4rem;
     color: #e2e8f0;
-    font-size: 0.9rem;
-    line-height: 1.6;
+    font-size: 0.92rem;
+    line-height: 1.65;
     margin-top: 1rem;
 }
 
 .stat-pill {
+    font-family: 'JetBrains Mono', monospace;
     display: inline-block;
     background: rgba(110, 118, 129, 0.15);
-    border: 1px solid #30363d;
+    border: 1px solid rgba(255, 255, 255, 0.12);
     border-radius: 20px;
     padding: 0.3rem 0.8rem;
-    font-size: 0.82rem;
+    font-size: 0.78rem;
     color: #e6edf3;
     margin-right: 0.5rem;
     margin-bottom: 0.4rem;
 }
 
-.strength-item { color: #22c55e; padding: 0.25rem 0; font-size: 0.9rem; }
+.strength-item { color: #4ade80; padding: 0.25rem 0; font-size: 0.9rem; }
 .weakness-item { color: #f87171; padding: 0.25rem 0; font-size: 0.9rem; }
 
 .gradient-divider {
@@ -236,15 +260,42 @@ if not st.session_state["interview_active"]:
             height=130,
         )
 
-        with st.expander("⚙️ Optional Gemini AI Key", expanded=False):
-            gemini_key_input = st.text_input(
-                "Gemini API Key",
-                type="password",
-                value=st.session_state.get("gemini_api_key", ""),
-                help="Optional. If omitted, uses built-in 100% offline heuristic question bank and rubric.",
-            )
-            if gemini_key_input:
-                st.session_state["gemini_api_key"] = gemini_key_input.strip()
+        st.markdown("#### 3. AI Evaluation & Generation Engine")
+        engine_options = [
+            "🤗 Hugging Face Neural Engine (Local ML - No API Key Required)",
+            "✨ Google Gemini 2.0 Flash (Online Cloud LLM)",
+            "⚡ Rule-Based Heuristic Rubric (100% Offline, Instant)",
+        ]
+        curr_eng = st.session_state.get("interview_engine", "hf")
+        def_idx = 0 if curr_eng == "hf" else (1 if curr_eng == "gemini" else 2)
+
+        chosen_eng_label = st.radio(
+            "Select Intelligence Engine:",
+            options=engine_options,
+            index=def_idx,
+            help="Choose between offline Hugging Face local transformer inference, Gemini cloud AI, or instant deterministic heuristics.",
+            key="interview_engine_choice_radio",
+        )
+        if "Hugging Face" in chosen_eng_label:
+            selected_interview_engine = "hf"
+            st.caption("🚀 **Local Neural Engine Active:** Generates dynamic questions and analyzes answer depth on-device without external API calls.")
+        elif "Gemini" in chosen_eng_label:
+            selected_interview_engine = "gemini"
+            with st.expander("⚙️ Gemini API Configuration", expanded=True):
+                gemini_key_input = st.text_input(
+                    "Gemini API Key",
+                    type="password",
+                    value=st.session_state.get("gemini_api_key", ""),
+                    help="Optional if GEMINI_API_KEY environment variable is configured.",
+                    key="mock_interview_gemini_key_input",
+                )
+                if gemini_key_input:
+                    st.session_state["gemini_api_key"] = gemini_key_input.strip()
+        else:
+            selected_interview_engine = "offline"
+            st.caption("⚡ **Heuristic Engine Active:** Uses curated 30+ question taxonomies and deterministic STAR framework rubrics.")
+
+        st.session_state["interview_engine"] = selected_interview_engine
 
     st.markdown("<br>", unsafe_allow_html=True)
     start_btn = st.button("Start Mock Interview Session", type="primary", use_container_width=True)
@@ -252,6 +303,7 @@ if not st.session_state["interview_active"]:
     if start_btn:
         with st.spinner("Generating tailored interview loop questions..."):
             ai_key = st.session_state.get("gemini_api_key")
+            chosen_engine = st.session_state.get("interview_engine", "hf")
             questions = generate_interview_questions(
                 role=target_role,
                 company_style=company_style,
@@ -259,6 +311,7 @@ if not st.session_state["interview_active"]:
                 resume_context=custom_context,
                 num_questions=num_q,
                 api_key=ai_key,
+                engine=chosen_engine,
             )
 
             st.session_state["interview_questions"] = questions
@@ -269,6 +322,7 @@ if not st.session_state["interview_active"]:
             st.session_state["candidate_answers"] = {}
             st.session_state["session_role"] = target_role
             st.session_state["session_style"] = company_style
+            st.session_state["session_engine"] = chosen_engine
             st.rerun()
 
 # ─── ACTIVE INTERVIEW ROOM ───────────────────────────────────────────────────
@@ -494,12 +548,14 @@ else:
             else:
                 with st.spinner("Staff Engineer AI is analyzing your response across 4 dimensions..."):
                     ai_key = st.session_state.get("gemini_api_key")
+                    eval_engine = st.session_state.get("session_engine", st.session_state.get("interview_engine", "hf"))
                     evaluation = evaluate_candidate_answer(
                         question_obj=curr_q,
                         candidate_answer=candidate_text,
                         role=st.session_state.get("session_role", "Software Engineer"),
                         company_style=st.session_state.get("session_style", "General Tech"),
                         api_key=ai_key,
+                        engine=eval_engine,
                     )
 
                     # Update or append evaluation in session state
@@ -519,10 +575,14 @@ else:
         # Display Evaluation if already evaluated for this question
         curr_eval = next((e for e in st.session_state["interview_evaluations"] if e["question_id"] == curr_q["id"]), None)
         if curr_eval:
+            eng_tag = curr_eval.get("ai_engine", "AI Evaluator")
             st.markdown(f"""
 <div class="feedback-card">
-    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1rem;">
-        <span style="font-size:1.1rem; font-weight:700; color:#f8fafc;">Question Scorecard</span>
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1rem; flex-wrap:wrap; gap:0.5rem;">
+        <div>
+            <span style="font-size:1.1rem; font-weight:700; color:#f8fafc;">Question Scorecard</span>
+            <span style="font-size:0.75rem; background:rgba(99,102,241,0.18); border:1px solid rgba(99,102,241,0.4); color:#a5b4fc; padding:2px 8px; border-radius:12px; margin-left:8px; font-weight:600;">{eng_tag}</span>
+        </div>
         <span class="stat-pill" style="border-color:#6366f1; color:#818cf8; font-weight:800; font-size:1rem;">
             {curr_eval['overall_score']} / 100 ({curr_eval['verdict']})
         </span>

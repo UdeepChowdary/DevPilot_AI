@@ -9,6 +9,7 @@ from typing import Dict, List, Any, Optional
 import json
 import os
 from utils.gemini_client import ask_json
+from utils.hf_models import hf_generate_github_critique
 
 
 def generate_rule_based_critique(
@@ -66,6 +67,7 @@ def generate_rule_based_critique(
 
     return {
         "is_ai_generated": False,
+        "ai_engine": "Rule-Based Heuristic",
         "executive_summary": f"Portfolio shows strong technical foundation in {lang_str} with {len(top_repos)} original projects. Prioritizing live deployment links and detailed README architecture diagrams will significantly increase recruiter callbacks.",
         "elevator_pitch": elevator_pitch,
         "resume_bullets": resume_bullets,
@@ -82,14 +84,25 @@ def generate_ai_critique(
     profile_data: Dict[str, Any],
     audit_data: Dict[str, Any],
     api_key: Optional[str] = None,
+    engine: str = "gemini",
 ) -> Dict[str, Any]:
     """
-    Generate an AI-powered portfolio critique using Google Gemini.
-    Falls back to rule-based critique on error or missing API key.
+    Generate an AI-powered portfolio critique.
+    Supports:
+      - 'hf': Hugging Face Local Neural Engine (T5 / offline)
+      - 'gemini': Google Gemini 2.0 Flash
+    Falls back gracefully to local neural or rule-based critique.
     """
+    if engine == "hf":
+        return hf_generate_github_critique(profile_data, audit_data)
+
     key = api_key or os.getenv("GEMINI_API_KEY")
     if not key or not key.strip():
-        return generate_rule_based_critique(profile_data, audit_data)
+        # Fall back to Hugging Face local neural engine first, then rule-based
+        try:
+            return hf_generate_github_critique(profile_data, audit_data)
+        except Exception:
+            return generate_rule_based_critique(profile_data, audit_data)
 
     profile = profile_data.get("profile", {})
     top_repos = profile_data.get("top_repos", [])[:4]
@@ -149,6 +162,7 @@ Return a strict JSON object with this EXACT structure (no markdown fences, just 
         result = ask_json(prompt, api_key=key.strip())
         if isinstance(result, dict) and "executive_summary" in result and "resume_bullets" in result:
             result["is_ai_generated"] = True
+            result["ai_engine"] = "Google Gemini 2.0 Flash"
             return result
     except Exception:
         # Fall back gracefully to rule-based on any LLM parsing/network failure

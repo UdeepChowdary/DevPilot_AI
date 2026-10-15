@@ -33,168 +33,206 @@ render_sidebar()
 # ─── Custom CSS ───────────────────────────────────────────────────────────────
 st.markdown("""
 <style>
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
-
-* { font-family: 'Inter', sans-serif; }
-
 .hero {
-    background: linear-gradient(135deg, #ffffff 0%, #cbd5e1 100%);
-    border-radius: 16px;
-    padding: 2.2rem;
-    margin-bottom: 1.5rem;
-    color: #0f172a;
+    background: linear-gradient(135deg, #090d16 0%, #151b2e 50%, #1e1b4b 100%);
+    border-radius: 18px;
+    padding: 2.4rem 2.6rem;
+    margin-bottom: 1.8rem;
+    color: #ffffff;
     position: relative;
     overflow: hidden;
-    border: 1px solid #e2e8f0;
+    border: 1px solid rgba(99, 102, 241, 0.28);
+    box-shadow: 0 16px 36px -12px rgba(0, 0, 0, 0.7);
 }
 .hero::before {
     content: '';
     position: absolute;
     top: -40%;
     right: -5%;
-    width: 300px;
-    height: 300px;
-    background: radial-gradient(circle, rgba(99,102,241,0.08) 0%, transparent 70%);
+    width: 320px;
+    height: 320px;
+    background: radial-gradient(circle, rgba(99,102,241,0.18) 0%, transparent 70%);
     border-radius: 50%;
     pointer-events: none;
 }
-.hero h1 { font-size: 2.2rem; font-weight: 700; margin: 0 0 0.4rem 0; position:relative; z-index:1; }
-.hero-accent { width:50px; height:3px; background: linear-gradient(90deg,#6366f1,#a855f7); border-radius:2px; margin-bottom:0.75rem; position:relative; z-index:1; }
-.hero p  { font-size: 1rem; opacity: 0.85; margin: 0; position:relative; z-index:1; }
+.hero h1 {
+    font-family: 'Sora', sans-serif !important;
+    font-size: 2.3rem;
+    font-weight: 800;
+    color: #ffffff;
+    margin: 0 0 0.5rem 0;
+    letter-spacing: -0.02em;
+    position: relative;
+    z-index: 1;
+}
+.hero-accent {
+    width: 50px;
+    height: 3px;
+    background: linear-gradient(90deg, #6366f1, #a855f7);
+    border-radius: 2px;
+    margin-bottom: 0.9rem;
+    position: relative;
+    z-index: 1;
+}
+.hero p {
+    font-size: 1rem;
+    color: #cbd5e1;
+    margin: 0;
+    line-height: 1.6;
+    position: relative;
+    z-index: 1;
+}
 
 /* ── Upload drop zone ── */
 div[data-testid="stFileUploadDropzone"] {
-    background: rgba(99,102,241,0.05) !important;
-    border: 2px dashed rgba(99,102,241,0.35) !important;
-    border-radius: 12px !important;
-    transition: border-color 0.2s ease, background 0.2s ease !important;
+    background: rgba(99,102,241,0.06) !important;
+    border: 1px dashed rgba(99,102,241,0.4) !important;
+    border-radius: 14px !important;
+    transition: all 0.2s ease !important;
 }
 div[data-testid="stFileUploadDropzone"]:hover {
-    background: rgba(99,102,241,0.1) !important;
-    border-color: rgba(99,102,241,0.6) !important;
+    background: rgba(99,102,241,0.12) !important;
+    border-color: rgba(99,102,241,0.7) !important;
 }
 
 /* ── Score card ── */
 .score-card {
-    background: linear-gradient(135deg, #1a1a2e, #16213e);
-    border: 1px solid rgba(99, 102, 241, 0.3);
-    border-radius: 12px;
-    padding: 1.5rem;
+    background: linear-gradient(145deg, #131726 0%, #0e111d 100%);
+    border: 1px solid rgba(99, 102, 241, 0.25);
+    border-radius: 14px;
+    padding: 1.6rem;
     text-align: center;
     color: white;
+    box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.5);
 }
 .score-number {
+    font-family: 'JetBrains Mono', monospace !important;
     font-size: 3.5rem;
-    font-weight: 700;
-    background: linear-gradient(135deg, #6366f1, #a855f7);
+    font-weight: 800;
+    background: linear-gradient(135deg, #818cf8, #c084fc);
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
+    font-variant-numeric: tabular-nums;
 }
 
 /* ── Keyword chips ── */
 .kw-chip-match {
+    font-family: 'JetBrains Mono', monospace;
     display: inline-block;
-    background: rgba(34,197,94,0.15);
-    border: 1px solid rgba(34,197,94,0.4);
-    color: #22c55e;
+    background: rgba(34,197,94,0.12);
+    border: 1px solid rgba(34,197,94,0.35);
+    color: #4ade80;
     border-radius: 20px;
     padding: 0.25rem 0.75rem;
     margin: 0.2rem;
-    font-size: 0.8rem;
-    font-weight: 500;
+    font-size: 0.78rem;
+    font-weight: 600;
 }
 .kw-chip-miss {
+    font-family: 'JetBrains Mono', monospace;
     display: inline-block;
-    background: rgba(239,68,68,0.15);
-    border: 1px solid rgba(239,68,68,0.4);
-    color: #ef4444;
+    background: rgba(239,68,68,0.12);
+    border: 1px solid rgba(239,68,68,0.35);
+    color: #f87171;
     border-radius: 20px;
     padding: 0.25rem 0.75rem;
     margin: 0.2rem;
-    font-size: 0.8rem;
-    font-weight: 500;
+    font-size: 0.78rem;
+    font-weight: 600;
 }
 .kw-chip-neutral {
+    font-family: 'JetBrains Mono', monospace;
     display: inline-block;
     background: rgba(99,102,241,0.12);
     border: 1px solid rgba(99,102,241,0.3);
-    color: #818cf8;
+    color: #a5b4fc;
     border-radius: 20px;
     padding: 0.25rem 0.75rem;
     margin: 0.2rem;
-    font-size: 0.8rem;
-    font-weight: 500;
+    font-size: 0.78rem;
+    font-weight: 600;
 }
 
 /* ── Bullet side-by-side card ── */
 .bullet-card {
-    background: #1e1e2e;
-    border-radius: 12px;
-    padding: 1.1rem 1.3rem;
-    margin-bottom: 1rem;
-    border-left: 4px solid #6366f1;
+    background: linear-gradient(145deg, #131726 0%, #0e111d 100%);
+    border: 1px solid rgba(99, 102, 241, 0.22);
+    border-radius: 14px;
+    padding: 1.2rem 1.4rem;
+    margin-bottom: 1.1rem;
     display: grid;
     grid-template-columns: 1fr 1fr;
-    gap: 1rem;
+    gap: 1.2rem;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+.bullet-card:hover {
+    border-color: rgba(99, 102, 241, 0.45);
+    box-shadow: 0 8px 24px -6px rgba(0, 0, 0, 0.5);
 }
 .bullet-col-label {
-    font-size: 0.72rem;
+    font-family: 'Sora', sans-serif;
+    font-size: 0.74rem;
     font-weight: 700;
     text-transform: uppercase;
     letter-spacing: 0.08em;
-    margin-bottom: 0.4rem;
+    margin-bottom: 0.45rem;
 }
-.bullet-original-label { color: #64748b; }
-.bullet-enhanced-label { color: #818cf8; }
-.bullet-text-original { color: #94a3b8; font-size: 0.88rem; line-height: 1.55; }
-.bullet-text-enhanced { color: #f8fafc; font-size: 0.9rem; font-weight: 500; line-height: 1.55; }
-.bullet-tags { grid-column: 1 / -1; display:flex; flex-wrap:wrap; gap:0.3rem; margin-top:0.3rem; }
+.bullet-original-label { color: #94a3b8; }
+.bullet-enhanced-label { color: #a5b4fc; }
+.bullet-text-original { color: #94a3b8; font-size: 0.88rem; line-height: 1.6; }
+.bullet-text-enhanced { color: #f8fafc; font-size: 0.92rem; font-weight: 500; line-height: 1.6; }
+.bullet-tags { grid-column: 1 / -1; display:flex; flex-wrap:wrap; gap:0.35rem; margin-top:0.4rem; }
 .bullet-tag {
+    font-family: 'JetBrains Mono', monospace;
     font-size: 0.72rem;
-    background: rgba(99,102,241,0.2);
-    color: #818cf8;
-    border-radius: 4px;
-    padding: 0.15rem 0.5rem;
+    background: rgba(99,102,241,0.18);
+    color: #a5b4fc;
+    border-radius: 5px;
+    padding: 0.18rem 0.55rem;
 }
 .metric-tag {
+    font-family: 'JetBrains Mono', monospace;
     font-size: 0.72rem;
     background: rgba(34,197,94,0.15);
-    color: #22c55e;
-    border-radius: 4px;
-    padding: 0.15rem 0.5rem;
+    color: #4ade80;
+    border-radius: 5px;
+    padding: 0.18rem 0.55rem;
 }
 .no-metric-tag {
+    font-family: 'JetBrains Mono', monospace;
     font-size: 0.72rem;
     background: rgba(234,179,8,0.15);
-    color: #eab308;
-    border-radius: 4px;
-    padding: 0.15rem 0.5rem;
+    color: #facc15;
+    border-radius: 5px;
+    padding: 0.18rem 0.55rem;
 }
 .ai-tag {
+    font-family: 'JetBrains Mono', monospace;
     font-size: 0.72rem;
-    background: rgba(168,85,247,0.2);
-    color: #c084fc;
-    border-radius: 4px;
-    padding: 0.15rem 0.5rem;
+    background: rgba(168,85,247,0.18);
+    color: #d8b4fe;
+    border-radius: 5px;
+    padding: 0.18rem 0.55rem;
 }
 
-.strength-item { color: #22c55e; padding: 0.25rem 0; font-size: 0.9rem; }
+.strength-item { color: #4ade80; padding: 0.25rem 0; font-size: 0.9rem; }
 .weakness-item { color: #f87171; padding: 0.25rem 0; font-size: 0.9rem; }
 
 .gradient-divider {
     height: 1px;
     background: linear-gradient(90deg, transparent, rgba(99,102,241,0.35), transparent);
-    margin: 1.5rem 0;
+    margin: 1.6rem 0;
 }
 
 /* ── Score verdict badge ── */
 .score-verdict {
+    font-family: 'JetBrains Mono', monospace;
     display: inline-block;
     border-radius: 30px;
     padding: 0.5rem 1.4rem;
-    font-size: 0.95rem;
+    font-size: 0.92rem;
     font-weight: 700;
-    margin-top: 0.5rem;
+    margin-top: 0.6rem;
     border: 1px solid;
 }
 
@@ -204,11 +242,11 @@ div[data-testid="stTabs"] button { font-weight: 600; font-size: 0.95rem; }
 .empty-state {
     text-align: center;
     padding: 3rem 2rem;
-    color: #475569;
+    color: #64748b;
 }
 .empty-state .es-icon { font-size: 3.5rem; margin-bottom: 1rem; }
-.empty-state .es-title { font-size: 1.1rem; font-weight: 600; color: #64748b; margin-bottom: 0.5rem; }
-.empty-state .es-sub { font-size: 0.9rem; color: #475569; }
+.empty-state .es-title { font-family: 'Sora', sans-serif; font-size: 1.15rem; font-weight: 700; color: #cbd5e1; margin-bottom: 0.5rem; }
+.empty-state .es-sub { font-size: 0.9rem; color: #94a3b8; }
 </style>
 """, unsafe_allow_html=True)
 
@@ -248,18 +286,23 @@ with st.expander("⚙️ Enhancement Engine & AI Options"):
     opt_col1, opt_col2 = st.columns(2)
     with opt_col1:
         enhancement_mode = st.radio(
-            "Bullet Rewriting Mode:",
-            options=["rule_based", "gemini", "t5"],
+            "Bullet Rewriting & AI Engine:",
+            options=["t5", "gemini", "rule_based"],
             format_func=lambda x: {
-                "rule_based": "Fast Rule-Based (Instant, 100% Offline)",
-                "gemini": "Gemini AI Mode (Google XYZ Formula)",
-                "t5": "🤖 Local T5 Model (Offline Neural)",
+                "t5": "🤗 Hugging Face Local Neural Engine (T5, 100% Offline, No Key)",
+                "gemini": "✨ Google Gemini 2.0 Flash (Online Cloud LLM, API Key)",
+                "rule_based": "⚡ Fast Rule-Based Heuristic (Instant, Zero Dependencies)",
             }[x],
             index=0,
-            help="Choose how weak bullet points are enhanced into high-impact accomplishments.",
+            help="Choose how weak bullet points are analyzed and enhanced into high-impact accomplishments.",
         )
     with opt_col2:
-        if enhancement_mode == "gemini":
+        if enhancement_mode == "t5":
+            st.info(
+                "🤗 **Hugging Face Local Neural Engine**: Runs directly on your machine via PyTorch & Transformers. "
+                "100% private and offline Google XYZ bullet transformation without external API keys."
+            )
+        elif enhancement_mode == "gemini":
             has_env_key = bool(os.getenv("GEMINI_API_KEY"))
             if not has_env_key:
                 user_key = st.text_input(
@@ -272,12 +315,8 @@ with st.expander("⚙️ Enhancement Engine & AI Options"):
                     st.session_state["gemini_api_key"] = user_key.strip()
             else:
                 st.success("GEMINI_API_KEY detected from environment.")
-        elif enhancement_mode == "t5":
-            st.warning(
-                "⚠️ **T5 Local Model**: On first run, HuggingFace will download "
-                "**~240MB** of model weights. The app will appear busy — "
-                "a progress indicator will show during loading."
-            )
+        elif enhancement_mode == "rule_based":
+            st.caption("Fast deterministic heuristic engine with action verb swaps and metric verification.")
 
 # ─── Analyze Button ───────────────────────────────────────────────────────────
 analyze_clicked = st.button(

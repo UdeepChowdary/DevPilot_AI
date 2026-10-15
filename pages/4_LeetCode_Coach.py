@@ -37,70 +37,98 @@ render_sidebar()
 # ─── Custom CSS ───────────────────────────────────────────────────────────────
 st.markdown("""
 <style>
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
-* { font-family: 'Inter', sans-serif; }
-
 .hero-leetcode {
-    background: linear-gradient(135deg, #0f2027 0%, #203a43 50%, #2c5364 100%);
-    border-radius: 16px;
-    padding: 2.2rem 2.4rem;
+    background: linear-gradient(135deg, #0d1117 0%, #171d2b 50%, #1e283d 100%);
+    border-radius: 18px;
+    padding: 2.4rem 2.6rem;
     margin-bottom: 1.8rem;
-    border: 1px solid rgba(245, 158, 11, 0.4);
+    border: 1px solid rgba(245, 158, 11, 0.35);
     color: white;
     position: relative;
     overflow: hidden;
+    box-shadow: 0 16px 36px -12px rgba(0, 0, 0, 0.7);
 }
 .hero-leetcode::before {
     content: '';
     position: absolute;
     top: -40%;
     right: -5%;
-    width: 300px;
-    height: 300px;
+    width: 320px;
+    height: 320px;
     background: radial-gradient(circle, rgba(245, 158, 11, 0.15) 0%, transparent 70%);
     border-radius: 50%;
     pointer-events: none;
 }
-.hero-leetcode h1 { font-size: 2.2rem; font-weight: 800; margin: 0 0 0.4rem 0; position: relative; z-index: 1; }
-.hero-accent { width: 50px; height: 3px; background: linear-gradient(90deg, #f59e0b, #ef4444); border-radius: 2px; margin-bottom: 0.75rem; position: relative; z-index: 1; }
-.hero-leetcode p  { font-size: 0.95rem; color: #cbd5e1; margin: 0; line-height: 1.6; position: relative; z-index: 1; }
+.hero-leetcode h1 {
+    font-family: 'Sora', sans-serif !important;
+    font-size: 2.3rem;
+    font-weight: 800;
+    margin: 0 0 0.5rem 0;
+    letter-spacing: -0.02em;
+    position: relative;
+    z-index: 1;
+}
+.hero-accent {
+    width: 50px;
+    height: 3px;
+    background: linear-gradient(90deg, #f59e0b, #ef4444);
+    border-radius: 2px;
+    margin-bottom: 0.9rem;
+    position: relative;
+    z-index: 1;
+}
+.hero-leetcode p {
+    font-size: 1rem;
+    color: #cbd5e1;
+    margin: 0;
+    line-height: 1.6;
+    position: relative;
+    z-index: 1;
+}
 
 .stat-pill {
+    font-family: 'JetBrains Mono', monospace;
     display: inline-block;
     background: rgba(110, 118, 129, 0.15);
-    border: 1px solid #30363d;
+    border: 1px solid rgba(255, 255, 255, 0.12);
     border-radius: 20px;
     padding: 0.3rem 0.8rem;
-    font-size: 0.82rem;
+    font-size: 0.78rem;
     color: #e6edf3;
     margin-right: 0.5rem;
     margin-bottom: 0.4rem;
 }
-.pill-easy   { background: rgba(34,197,94,0.15); border-color:#22c55e; color:#22c55e; font-weight:700; }
-.pill-medium { background: rgba(245,158,11,0.15); border-color:#f59e0b; color:#f59e0b; font-weight:700; }
-.pill-hard   { background: rgba(239,68,68,0.15); border-color:#ef4444; color:#ef4444; font-weight:700; }
+.pill-easy   { font-family: 'JetBrains Mono', monospace; background: rgba(34,197,94,0.15); border-color:#22c55e; color:#4ade80; font-weight:700; }
+.pill-medium { font-family: 'JetBrains Mono', monospace; background: rgba(245,158,11,0.15); border-color:#f59e0b; color:#fbbf24; font-weight:700; }
+.pill-hard   { font-family: 'JetBrains Mono', monospace; background: rgba(239,68,68,0.15); border-color:#ef4444; color:#f87171; font-weight:700; }
 
 .problem-card {
-    background: #161b22;
-    border: 1px solid #30363d;
-    border-radius: 10px;
-    padding: 1.1rem 1.3rem;
-    margin-bottom: 0.8rem;
-    transition: all 0.2s ease-in-out;
+    background: linear-gradient(145deg, #131726, #0e111d);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 12px;
+    padding: 1.2rem 1.4rem;
+    margin-bottom: 0.85rem;
+    transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
 }
 .problem-card:hover {
-    border-color: #f59e0b;
-    box-shadow: 0 4px 16px rgba(245, 158, 11, 0.1);
+    border-color: rgba(245, 158, 11, 0.5);
+    box-shadow: 0 8px 24px -4px rgba(0, 0, 0, 0.5);
+    transform: translateY(-2px);
 }
-.problem-title { font-size: 1.05rem; font-weight: 700; color: #f8fafc; text-decoration: none; }
+.problem-title {
+    font-family: 'Sora', sans-serif !important;
+    font-size: 1.05rem;
+    font-weight: 700;
+    color: #f8fafc;
+    text-decoration: none;
+}
 .problem-title:hover { color: #f59e0b; }
 
 .complexity-card {
-    background: linear-gradient(135deg, #1e1e2e, #161b22);
+    background: linear-gradient(145deg, rgba(245, 158, 11, 0.06), #131726);
     border: 1px solid rgba(245, 158, 11, 0.3);
-    border-left: 4px solid #f59e0b;
-    border-radius: 12px;
-    padding: 1.4rem;
+    border-radius: 14px;
+    padding: 1.5rem;
     margin-top: 1rem;
     color: #f8fafc;
 }
@@ -108,7 +136,7 @@ st.markdown("""
 .gradient-divider {
     height: 1px;
     background: linear-gradient(90deg, transparent, rgba(245, 158, 11, 0.35), transparent);
-    margin: 1.5rem 0;
+    margin: 1.6rem 0;
 }
 </style>
 """, unsafe_allow_html=True)
@@ -359,7 +387,7 @@ if st.session_state.get("lc_stats") and st.session_state.get("leetcode_audit"):
             st.markdown("#### Priority Gap Areas:")
             for b in audit.get("blind_spots", []):
                 st.markdown(f"""
-<div style="background:#161b22; border-left:4px solid #ef4444; border-radius:8px; padding:0.9rem 1.1rem; margin-bottom:0.7rem;">
+<div style="background:linear-gradient(145deg, rgba(239,68,68,0.08), #131726); border:1px solid rgba(239,68,68,0.32); border-radius:10px; padding:0.9rem 1.1rem; margin-bottom:0.75rem;">
     <span style="color:#f87171; font-weight:700;">⚠️ {b}</span>
 </div>
 """, unsafe_allow_html=True)
@@ -416,6 +444,25 @@ if st.session_state.get("lc_stats") and st.session_state.get("leetcode_audit"):
         st.markdown("### AI Code Complexity & Pattern Optimizer")
         st.caption("Paste an algorithm implementation or brute-force solution to analyze its computational complexity and optimize data structures.")
 
+        lc_engine_opts = [
+            "🤗 Hugging Face Neural Engine (Local ML - No API Key)",
+            "✨ Google Gemini 2.0 Flash (Cloud AI)",
+            "⚡ AST & Heuristic Static Analyzer (Instant)",
+        ]
+        lc_engine_choice = st.radio(
+            "Select Code Optimizer Engine:",
+            options=lc_engine_opts,
+            index=0,
+            horizontal=True,
+            key="lc_code_engine_radio",
+        )
+        if "Hugging Face" in lc_engine_choice:
+            selected_lc_engine = "hf"
+        elif "Gemini" in lc_engine_choice:
+            selected_lc_engine = "gemini"
+        else:
+            selected_lc_engine = "offline"
+
         code_input = st.text_area(
             "Paste your solution (Python, Java, C++, or JavaScript):",
             height=200,
@@ -432,7 +479,7 @@ if st.session_state.get("lc_stats") and st.session_state.get("leetcode_audit"):
         if opt_btn and code_input.strip():
             with st.spinner("Analyzing runtime and space complexity..."):
                 ai_key = st.session_state.get("gemini_api_key")
-                analysis = analyze_code_complexity(code_input, api_key=ai_key)
+                analysis = analyze_code_complexity(code_input, api_key=ai_key, engine=selected_lc_engine)
 
                 c_col1, c_col2 = st.columns(2)
                 with c_col1:
@@ -440,10 +487,16 @@ if st.session_state.get("lc_stats") and st.session_state.get("leetcode_audit"):
                 with c_col2:
                     st.metric("Space Complexity", analysis["space_complexity"])
 
+                eng_badge = analysis.get("ai_engine", "Local Neural Engine")
                 st.markdown(f"""
 <div class="complexity-card">
-    <div style="font-size:1.1rem; font-weight:700; color:#f59e0b; margin-bottom:0.4rem;">
-        Pattern: {analysis['detected_pattern']}
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:0.6rem; flex-wrap:wrap; gap:0.5rem;">
+        <span style="font-size:1.1rem; font-weight:700; color:#f59e0b;">
+            Pattern: {analysis['detected_pattern']}
+        </span>
+        <span style="font-size:0.75rem; background:rgba(99,102,241,0.18); border:1px solid rgba(99,102,241,0.4); color:#a5b4fc; padding:2px 8px; border-radius:12px; font-weight:600;">
+            {eng_badge}
+        </span>
     </div>
     <div style="color:#e2e8f0; font-size:0.92rem; line-height:1.6;">
         <b>Optimization Strategy:</b> {analysis['optimization_tip']}

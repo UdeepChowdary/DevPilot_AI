@@ -15,6 +15,7 @@ from requests.adapters import HTTPAdapter
 from urllib3.util.retry import Retry
 
 from utils.gemini_client import ask_json
+from utils.hf_models import hf_analyze_code_complexity
 
 logger = logging.getLogger(__name__)
 
@@ -396,10 +397,14 @@ def generate_practice_roadmap(
 def analyze_code_complexity(
     code_snippet: str,
     api_key: Optional[str] = None,
+    engine: str = "gemini",
 ) -> Dict[str, Any]:
     """
     Analyze Time & Space complexity of code and recommend pattern optimizations.
-    Uses Gemini AI when available, falls back to offline heuristic analysis.
+    Supports:
+      - 'hf': Hugging Face Local Neural Engine (CodeT5 / AST heuristic)
+      - 'gemini': Google Gemini 2.0 Flash
+      - 'offline': Heuristic Pattern Analyzer
     """
     clean_code = (code_snippet or "").strip()
     if not clean_code or len(clean_code) < 10:
@@ -409,11 +414,19 @@ def analyze_code_complexity(
             "detected_pattern": "No code provided",
             "optimization_tip": "Paste a solution to analyze its computational complexity and data structure efficiency.",
             "is_optimal": True,
+            "ai_engine": "Rule-Based Heuristic",
         }
 
-    # Try Gemini AI first if API key is provided
+    # 1. Hugging Face Local Neural Engine
+    if engine == "hf":
+        try:
+            return hf_analyze_code_complexity(clean_code)
+        except Exception as e:
+            logger.warning("HF code complexity analysis fallback: %s", e)
+
+    # 2. Try Gemini AI if configured
     key = (api_key or "").strip() or os.getenv("GEMINI_API_KEY", "").strip()
-    if key:
+    if key and engine != "offline":
         prompt = f"""
 You are a Principal Software Engineer and Competitive Programming Coach.
 Analyze the following algorithm implementation for Time Complexity, Space Complexity, and optimization opportunities.
@@ -438,9 +451,17 @@ Return ONLY valid JSON without markdown fences.
         try:
             res = ask_json(prompt, api_key=key)
             if isinstance(res, dict) and "time_complexity" in res:
+                res["ai_engine"] = "Google Gemini 2.0 Flash"
                 return res
         except Exception as e:
             logger.warning("Gemini code complexity analysis failed: %s", e)
+
+    # If Gemini wasn't chosen or failed, try HF
+    if engine != "offline":
+        try:
+            return hf_analyze_code_complexity(clean_code)
+        except Exception:
+            pass
 
     # 100% Offline Heuristic Analyzer
     lines = clean_code.splitlines()

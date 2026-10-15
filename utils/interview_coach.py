@@ -14,6 +14,7 @@ from typing import Dict, List, Any, Optional
 
 from utils.gemini_client import ask, ask_json
 from utils.constants import ACTION_VERBS
+from utils.hf_models import hf_generate_interview_questions, hf_evaluate_interview_answer
 
 logger = logging.getLogger(__name__)
 
@@ -189,14 +190,31 @@ def generate_interview_questions(
     resume_context: str = "",
     num_questions: int = 3,
     api_key: Optional[str] = None,
+    engine: str = "gemini",
 ) -> List[Dict[str, Any]]:
     """
     Generate tailored interview questions based on role, company style, and resume context.
-    Uses Gemini AI when API key is available, falls back seamlessly to offline bank.
+    Supports:
+      - 'hf': Hugging Face Local Neural Engine (T5, offline)
+      - 'gemini': Google Gemini 2.0 Flash
+      - 'offline': Heuristic Curated Question Bank
     """
+    if engine == "hf":
+        try:
+            hf_qs = hf_generate_interview_questions(
+                resume_text=resume_context,
+                target_tier=company_style,
+                role=role,
+                num_questions=num_questions,
+            )
+            if hf_qs:
+                return hf_qs[:num_questions]
+        except Exception as e:
+            logger.warning("HF interview question generation fallback: %s", e)
+
     # Try Gemini AI first if configured
     key = (api_key or "").strip() or os.getenv("GEMINI_API_KEY", "").strip()
-    if key:
+    if key and engine != "offline":
         ai_questions = _generate_questions_with_gemini(
             role=role,
             company_style=company_style,
@@ -368,6 +386,7 @@ def evaluate_candidate_answer(
     role: str = "Backend Engineer",
     company_style: str = "FAANG / Tier-1 Tech",
     api_key: Optional[str] = None,
+    engine: str = "gemini",
 ) -> Dict[str, Any]:
     """
     Score a candidate's answer across 4 core dimensions (0–100 total):
@@ -375,6 +394,11 @@ def evaluate_candidate_answer(
     2. Structure & Organization (25 pts)
     3. Communication Clarity & Pacing (25 pts)
     4. Engineering Tradeoffs & Metrics (25 pts)
+
+    Supports:
+      - 'hf': Hugging Face Local Neural Engine (offline)
+      - 'gemini': Google Gemini 2.0 Flash
+      - 'offline': Heuristic STAR Evaluator
     """
     clean_ans = (candidate_answer or "").strip()
     if not clean_ans or len(clean_ans) < 15:
@@ -393,14 +417,31 @@ def evaluate_candidate_answer(
             "strengths": [],
             "areas_to_improve": ["Provide a detailed response covering technical architecture or STAR framework."],
             "ideal_answer": "An ideal answer directly addresses the prompt, outlines concrete technical decisions, and cites measurable outcomes.",
+            "ai_engine": "Rule-Based Heuristic",
         }
 
     # Communication analysis
     comm_analysis = analyze_communication_delivery(clean_ans)
 
-    # Try Gemini AI evaluator if available
+    # 1. Hugging Face Local Neural Engine
+    if engine == "hf":
+        try:
+            hf_eval = hf_evaluate_interview_answer(
+                question_obj=question_obj,
+                candidate_answer=clean_ans,
+                comm_analysis=comm_analysis,
+            )
+            hf_eval["comm_analysis"] = comm_analysis
+            hf_eval["question_id"] = question_obj.get("id", 1)
+            hf_eval["question"] = question_obj.get("question", "")
+            hf_eval["candidate_answer"] = clean_ans
+            return hf_eval
+        except Exception as e:
+            logger.warning("HF answer evaluation fallback: %s", e)
+
+    # 2. Try Gemini AI evaluator if requested and available
     key = (api_key or "").strip() or os.getenv("GEMINI_API_KEY", "").strip()
-    if key:
+    if key and engine != "offline":
         ai_evaluation = _evaluate_with_gemini(
             question_obj=question_obj,
             candidate_answer=clean_ans,
@@ -411,14 +452,33 @@ def evaluate_candidate_answer(
         )
         if ai_evaluation:
             ai_evaluation["comm_analysis"] = comm_analysis
+            ai_evaluation["ai_engine"] = "Google Gemini 2.0 Flash"
             return ai_evaluation
 
-    # Offline Heuristic Evaluator
-    return _evaluate_offline(
+    # If Gemini wasn't available and not explicit offline, try HF first
+    if engine != "offline":
+        try:
+            hf_eval = hf_evaluate_interview_answer(
+                question_obj=question_obj,
+                candidate_answer=clean_ans,
+                comm_analysis=comm_analysis,
+            )
+            hf_eval["comm_analysis"] = comm_analysis
+            hf_eval["question_id"] = question_obj.get("id", 1)
+            hf_eval["question"] = question_obj.get("question", "")
+            hf_eval["candidate_answer"] = clean_ans
+            return hf_eval
+        except Exception:
+            pass
+
+    # 3. Offline Heuristic Evaluator
+    offline_eval = _evaluate_offline(
         question_obj=question_obj,
         candidate_answer=clean_ans,
         comm_analysis=comm_analysis,
     )
+    offline_eval["ai_engine"] = "Rule-Based Heuristic"
+    return offline_eval
 
 
 def _evaluate_with_gemini(

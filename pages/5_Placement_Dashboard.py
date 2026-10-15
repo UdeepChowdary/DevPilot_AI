@@ -28,6 +28,7 @@ from utils.placement_tracker import (
     export_pipeline_json,
     import_pipeline_json,
     export_pipeline_csv,
+    generate_placement_strategy,
 )
 from utils.pdf_generator import generate_placement_dossier_pdf
 from utils.sidebar import render_sidebar
@@ -45,18 +46,16 @@ render_sidebar()
 # ─── Custom CSS ───────────────────────────────────────────────────────────────
 st.markdown("""
 <style>
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
-* { font-family: 'Inter', sans-serif; }
-
 .hero-placement {
-    background: linear-gradient(135deg, #111827 0%, #1f2937 50%, #312e81 100%);
-    border-radius: 16px;
-    padding: 2.2rem 2.4rem;
+    background: linear-gradient(135deg, #090d16 0%, #151b2e 50%, #1e1b4b 100%);
+    border-radius: 18px;
+    padding: 2.4rem 2.6rem;
     margin-bottom: 1.8rem;
-    border: 1px solid rgba(99, 102, 241, 0.4);
+    border: 1px solid rgba(99, 102, 241, 0.35);
     color: white;
     position: relative;
     overflow: hidden;
+    box-shadow: 0 16px 36px -12px rgba(0, 0, 0, 0.7);
 }
 .hero-placement::before {
     content: '';
@@ -65,44 +64,83 @@ st.markdown("""
     right: -10%;
     width: 350px;
     height: 350px;
-    background: radial-gradient(circle, rgba(99, 102, 241, 0.25) 0%, transparent 70%);
+    background: radial-gradient(circle, rgba(99, 102, 241, 0.22) 0%, transparent 70%);
     border-radius: 50%;
     pointer-events: none;
 }
-.hero-placement h1 { font-size: 2.2rem; font-weight: 800; margin: 0 0 0.4rem 0; position: relative; z-index: 1; }
-.hero-accent { width: 55px; height: 3px; background: linear-gradient(90deg, #6366f1, #ec4899); border-radius: 2px; margin-bottom: 0.75rem; position: relative; z-index: 1; }
-.hero-placement p  { font-size: 0.95rem; color: #cbd5e1; margin: 0; line-height: 1.6; position: relative; z-index: 1; }
+.hero-placement h1 {
+    font-family: 'Sora', sans-serif !important;
+    font-size: 2.3rem;
+    font-weight: 800;
+    margin: 0 0 0.5rem 0;
+    letter-spacing: -0.02em;
+    position: relative;
+    z-index: 1;
+}
+.hero-accent {
+    width: 55px;
+    height: 3px;
+    background: linear-gradient(90deg, #6366f1, #ec4899);
+    border-radius: 2px;
+    margin-bottom: 0.9rem;
+    position: relative;
+    z-index: 1;
+}
+.hero-placement p {
+    font-size: 1rem;
+    color: #cbd5e1;
+    margin: 0;
+    line-height: 1.6;
+    position: relative;
+    z-index: 1;
+}
 
 .kpi-card {
-    background: #161b22;
-    border: 1px solid #30363d;
-    border-radius: 12px;
-    padding: 1.2rem 1.4rem;
+    background: linear-gradient(145deg, #131726, #0e111d);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 14px;
+    padding: 1.3rem 1.5rem;
     margin-bottom: 1rem;
     position: relative;
 }
-.kpi-title { font-size: 0.8rem; color: #8b949e; text-transform: uppercase; letter-spacing: 0.05em; font-weight: 600; }
-.kpi-value { font-size: 2.2rem; font-weight: 800; color: #f0f6fc; margin: 0.2rem 0; }
-.kpi-sub   { font-size: 0.8rem; color: #8b949e; }
+.kpi-title {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.72rem;
+    color: #94a3b8;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    font-weight: 600;
+}
+.kpi-value {
+    font-family: 'JetBrains Mono', monospace !important;
+    font-size: 2.2rem;
+    font-weight: 800;
+    color: #f0f6fc;
+    margin: 0.2rem 0;
+    font-variant-numeric: tabular-nums;
+}
+.kpi-sub { font-size: 0.8rem; color: #94a3b8; }
 
 .pillar-card {
-    background: #161b22;
-    border: 1px solid #30363d;
+    background: linear-gradient(145deg, #131726, #0e111d);
+    border: 1px solid rgba(255, 255, 255, 0.08);
     border-radius: 12px;
     padding: 1.2rem 1.4rem;
     margin-bottom: 1rem;
-    transition: all 0.2s ease-in-out;
+    transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
 }
 .pillar-card:hover {
-    border-color: #6366f1;
-    box-shadow: 0 4px 16px rgba(99, 102, 241, 0.12);
+    border-color: rgba(99, 102, 241, 0.5);
+    box-shadow: 0 8px 24px -4px rgba(0, 0, 0, 0.5);
+    transform: translateY(-2px);
 }
 
 .stage-badge {
+    font-family: 'JetBrains Mono', monospace;
     display: inline-block;
     padding: 0.2rem 0.65rem;
     border-radius: 20px;
-    font-size: 0.75rem;
+    font-size: 0.74rem;
     font-weight: 700;
 }
 
@@ -242,8 +280,9 @@ readiness = calculate_placement_readiness(
 st.session_state["placement_readiness"] = readiness
 
 # ─── Dashboard Tabs ───────────────────────────────────────────────────────────
-tab1, tab2, tab3, tab4 = st.tabs([
+tab1, tab2, tab3, tab4, tab5 = st.tabs([
     "🏆 Unified Readiness & Radar",
+    "🧠 AI Career Strategist",
     "🎯 Placement Sprint Milestones",
     "💼 Application Pipeline Manager",
     "📑 Executive Placement Dossier",
@@ -392,9 +431,117 @@ with tab1:
 
 
 # ═══════════════════════════════════════════════════════════════════════════════
-# TAB 2: Placement Sprint Milestones
+# TAB 2: AI Career Strategist & 4-Week Sprint Roadmap
 # ═══════════════════════════════════════════════════════════════════════════════
 with tab2:
+    st.markdown("### 🧠 AI Career Strategist & 4-Week Placement Sprint")
+    st.caption("Synthesizes all 4 engineering assessment pillars to formulate an executive hiring strategy, diagnose priority screening gaps, and build a customized 4-week sprint roadmap.")
+
+    strat_engine_opts = [
+        "🤗 Hugging Face Neural Engine (Local ML - No API Key)",
+        "✨ Google Gemini 2.0 Flash (Cloud AI)",
+    ]
+    strat_choice = st.radio(
+        "Select Placement Strategy Engine:",
+        options=strat_engine_opts,
+        index=0,
+        horizontal=True,
+        key="placement_strat_engine_radio",
+    )
+    selected_strat_engine = "hf" if "Hugging Face" in strat_choice else "gemini"
+
+    if selected_strat_engine == "gemini":
+        with st.expander("⚙️ Gemini API Configuration", expanded=False):
+            gemini_strat_key = st.text_input(
+                "Gemini API Key",
+                type="password",
+                value=st.session_state.get("gemini_api_key", ""),
+                help="Optional if GEMINI_API_KEY environment variable is configured.",
+                key="placement_gemini_key_input",
+            )
+            if gemini_strat_key:
+                st.session_state["gemini_api_key"] = gemini_strat_key.strip()
+
+    col_btn, _ = st.columns([1.5, 2.5])
+    with col_btn:
+        generate_strat_btn = st.button("Generate AI Placement Strategy & Sprint", type="primary", use_container_width=True)
+
+    if generate_strat_btn or "ai_placement_strategy" not in st.session_state:
+        with st.spinner("AI Strategist is synthesizing multi-pillar metrics and building your 4-week sprint..."):
+            ai_key = st.session_state.get("gemini_api_key")
+            strategy = generate_placement_strategy(
+                placement_data=readiness,
+                engine=selected_strat_engine,
+                api_key=ai_key,
+            )
+            st.session_state["ai_placement_strategy"] = strategy
+
+    if "ai_placement_strategy" in st.session_state:
+        strat = st.session_state["ai_placement_strategy"]
+        eng_label = strat.get("ai_engine", "Local Neural Engine")
+
+        # Executive verdict card
+        st.markdown(f"""
+<div class="kpi-card" style="border-left: 4px solid #6366f1; margin-top: 1rem;">
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:0.6rem; flex-wrap:wrap; gap:0.5rem;">
+        <span style="font-size:1.15rem; font-weight:700; color:#f8fafc;">Executive Candidate Verdict</span>
+        <span style="font-size:0.75rem; background:rgba(99,102,241,0.18); border:1px solid rgba(99,102,241,0.4); color:#a5b4fc; padding:2px 8px; border-radius:12px; font-weight:600;">
+            {eng_label}
+        </span>
+    </div>
+    <div style="color:#e2e8f0; font-size:1rem; line-height:1.6;">
+        {html.escape(strat.get("executive_verdict", ""))}
+    </div>
+</div>
+""", unsafe_allow_html=True)
+
+        col_st, col_gap = st.columns(2)
+        with col_st:
+            st.markdown(f"""
+<div style="background:#0f172a; border:1px solid rgba(34, 197, 94, 0.3); border-radius:12px; padding:1.2rem; margin-top:1rem;">
+    <div style="font-weight:700; color:#4ade80; margin-bottom:0.4rem; font-size:1rem;">🌟 Strongest Competitive Advantage</div>
+    <div style="color:#cbd5e1; font-size:0.92rem; line-height:1.5;">{html.escape(strat.get("strongest_pillar", ""))}</div>
+</div>
+""", unsafe_allow_html=True)
+        with col_gap:
+            st.markdown(f"""
+<div style="background:#0f172a; border:1px solid rgba(239, 68, 68, 0.3); border-radius:12px; padding:1.2rem; margin-top:1rem;">
+    <div style="font-weight:700; color:#f87171; margin-bottom:0.4rem; font-size:1rem;">⚠️ Priority Screening Risk to Fix</div>
+    <div style="color:#cbd5e1; font-size:0.92rem; line-height:1.5;">{html.escape(strat.get("priority_gap", ""))}</div>
+</div>
+""", unsafe_allow_html=True)
+
+        st.markdown("<br>", unsafe_allow_html=True)
+        st.markdown("#### 📅 4-Week Placement Acceleration Sprint")
+
+        sprint_cols = st.columns(4)
+        sprint_items = strat.get("sprint_plan", [])
+        for i, item in enumerate(sprint_items):
+            col_target = sprint_cols[i % len(sprint_cols)]
+            with col_target:
+                st.markdown(f"""
+<div style="background:#131726; border:1px solid #30363d; border-radius:12px; padding:1.2rem; height:100%; display:flex; flex-direction:column; justify-content:space-between;">
+    <div>
+        <div style="font-size:0.85rem; font-weight:700; color:#818cf8; text-transform:uppercase; letter-spacing:0.04em;">{html.escape(item.get('week', f'Week {i+1}'))}</div>
+        <div style="font-weight:700; color:#f0f6fc; margin:0.4rem 0 0.6rem 0; font-size:1rem;">{html.escape(item.get('focus', ''))}</div>
+        <div style="font-size:0.88rem; color:#94a3b8; line-height:1.5;">{html.escape(item.get('action', ''))}</div>
+    </div>
+</div>
+""", unsafe_allow_html=True)
+
+        if strat.get("recruiter_advice"):
+            st.markdown(f"""
+<div style="background:#161b26; border:1px dashed #475569; border-radius:12px; padding:1.2rem; margin-top:1.5rem;">
+    <div style="font-weight:700; color:#38bdf8; margin-bottom:0.3rem;">💼 Senior Recruiter Conversion Advice</div>
+    <div style="color:#cbd5e1; font-size:0.92rem; line-height:1.5;">{html.escape(strat.get("recruiter_advice", ""))}</div>
+</div>
+""", unsafe_allow_html=True)
+
+
+# ═══════════════════════════════════════════════════════════════════════════════
+# TAB 3: Placement Sprint Milestones
+# ═══════════════════════════════════════════════════════════════════════════════
+with tab3:
     st.markdown("### 🎯 Placement Sprint Milestone Checklist")
     st.markdown("Track essential preparation milestones across 5 core placement categories:")
 
@@ -461,9 +608,9 @@ with tab2:
 
 
 # ═══════════════════════════════════════════════════════════════════════════════
-# TAB 3: Application Pipeline Manager
+# TAB 4: Application Pipeline Manager
 # ═══════════════════════════════════════════════════════════════════════════════
-with tab3:
+with tab4:
     st.markdown("### 💼 Application & Interview Pipeline Manager")
     apps = st.session_state["placement_pipeline"]
     analytics = calculate_pipeline_analytics(apps)
@@ -554,16 +701,16 @@ with tab3:
                 notes_html = f'<div style="font-size:0.82rem; color:#c9d1d9; margin-top:0.4rem; font-style:italic;">{html.escape(app["notes"])}</div>' if app.get('notes') else ''
 
                 app_card_html = (
-                    f'<div style="background:#161b22; border:1px solid #30363d; border-left:4px solid {s_color}; border-radius:8px; padding:0.9rem 1.2rem; margin-bottom:0.75rem;">'
+                    f'<div style="background:linear-gradient(145deg, {s_color}10, #131726); border:1px solid {s_color}44; border-radius:12px; padding:1.1rem 1.3rem; margin-bottom:0.85rem; box-shadow:0 4px 14px -2px rgba(0,0,0,0.3);">'
                     f'<div style="display:flex; justify-content:space-between; align-items:flex-start;">'
                     f'<div>'
-                    f'<span style="font-size:1.1rem; font-weight:700; color:#f0f6fc;">{company_str}</span>'
-                    f'<span style="color:#8b949e; font-size:0.9rem;"> -- {role_str}</span>'
-                    f'<span style="margin-left:0.6rem; font-size:0.75rem; background:#21262d; border:1px solid #30363d; padding:0.15rem 0.5rem; border-radius:12px; color:#cbd5e1;">{tier_str}</span>'
+                    f'<span style="font-family:\'Sora\', sans-serif; font-size:1.12rem; font-weight:700; color:#f0f6fc;">{company_str}</span>'
+                    f'<span style="color:#94a3b8; font-size:0.9rem;"> — {role_str}</span>'
+                    f'<span style="font-family:\'JetBrains Mono\', monospace; margin-left:0.6rem; font-size:0.72rem; background:rgba(255,255,255,0.06); border:1px solid rgba(255,255,255,0.12); padding:0.15rem 0.5rem; border-radius:12px; color:#cbd5e1;">{tier_str}</span>'
                     f'</div>'
-                    f'<span style="background:{s_color}22; color:{s_color}; border:1px solid {s_color}; padding:0.2rem 0.7rem; border-radius:12px; font-weight:700; font-size:0.8rem;">{stage}</span>'
+                    f'<span style="font-family:\'JetBrains Mono\', monospace; background:{s_color}22; color:{s_color}; border:1px solid {s_color}55; padding:0.2rem 0.7rem; border-radius:12px; font-weight:700; font-size:0.78rem;">{stage}</span>'
                     f'</div>'
-                    f'<div style="display:flex; gap:15px; font-size:0.8rem; color:#8b949e; margin-top:0.4rem;">'
+                    f'<div style="display:flex; gap:16px; font-size:0.8rem; color:#94a3b8; margin-top:0.5rem;">'
                     f'<span>📅 Applied: {date_str}</span>'
                     f'<span>📍 {loc_str}</span>'
                     f'<span>💰 {comp_str}</span>'
@@ -627,9 +774,9 @@ with tab3:
 
 
 # ═══════════════════════════════════════════════════════════════════════════════
-# TAB 4: Executive Placement Dossier (PDF Export)
+# TAB 5: Executive Placement Dossier (PDF Export)
 # ═══════════════════════════════════════════════════════════════════════════════
-with tab4:
+with tab5:
     st.markdown("### 📑 Executive Placement Dossier")
     st.markdown("Generate and export a unified, recruiter-ready placement report synthesizing your 4-pillar readiness, sprint milestones, and active pipeline.")
 

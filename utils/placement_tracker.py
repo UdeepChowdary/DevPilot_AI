@@ -5,11 +5,18 @@ GitHub Portfolio, AI Mock Interview, and LeetCode Algorithmic metrics.
 Includes milestone sprint planning, company tier benchmarking, and application pipeline management.
 """
 
-from typing import Dict, List, Any, Optional
+import os
 import json
 import csv
 import io
+import logging
 from datetime import datetime, date
+from typing import Dict, List, Any, Optional
+
+from utils.gemini_client import ask_json
+from utils.hf_models import hf_generate_placement_strategy
+
+logger = logging.getLogger(__name__)
 
 # ---------------------------------------------------------------------------
 # Constants & Benchmarks
@@ -593,3 +600,84 @@ def export_pipeline_csv(applications: List[Dict[str, Any]]) -> str:
     for app in applications:
         writer.writerow(app)
     return output.getvalue()
+
+
+# ---------------------------------------------------------------------------
+# AI Placement Strategy & Career Accelerator
+# ---------------------------------------------------------------------------
+
+def generate_placement_strategy(
+    placement_data: Dict[str, Any],
+    engine: str = "hf",
+    api_key: Optional[str] = None,
+) -> Dict[str, Any]:
+    """
+    Generate an Executive Placement Strategy and Actionable 4-Week Roadmap.
+    Supports:
+      - 'hf': Hugging Face Local Neural Engine (100% offline, CPU/GPU)
+      - 'gemini': Google Gemini 2.0 Flash (Online Cloud LLM)
+    """
+    if engine == "hf":
+        try:
+            return hf_generate_placement_strategy(placement_data)
+        except Exception as e:
+            logger.warning("HF placement strategy fallback: %s", e)
+
+    key = (api_key or "").strip() or os.getenv("GEMINI_API_KEY", "").strip()
+    if key and engine != "offline":
+        composite = placement_data.get("composite_score", 65)
+        pillars = placement_data.get("pillars", {})
+        tier = placement_data.get("target_tier", "Tier-1 (FAANG / Quant / HFT / Top Unicorn)")
+
+        prompt = f"""
+You are an Executive Tech Career Coach and Director of University Engineering Placements.
+Analyze this candidate's multi-pillar engineering readiness profile and craft a high-impact placement acceleration strategy.
+
+<candidate_profile>
+Composite Score: {composite}/100
+Target Tier: {tier}
+Pillars: {json.dumps(pillars, indent=2)}
+</candidate_profile>
+
+Return a valid JSON object matching this schema:
+{{
+  "executive_verdict": "2-3 sentences assessing current candidacy and tier feasibility.",
+  "strongest_pillar": "Pillar name and why it is a competitive advantage.",
+  "priority_gap": "Weakest pillar name and concrete steps to eliminate screening risk.",
+  "sprint_plan": [
+    {{
+      "week": "Week 1: Immediate Screening Optimization",
+      "focus": "Core focus",
+      "action": "Concrete tactical steps to execute this week."
+    }},
+    {{
+      "week": "Week 2: Deep Technical & Project Fortification",
+      "focus": "Core focus",
+      "action": "Concrete tactical steps to execute this week."
+    }},
+    {{
+      "week": "Week 3: High-Stress Mock Interview Simulation",
+      "focus": "Core focus",
+      "action": "Concrete tactical steps to execute this week."
+    }},
+    {{
+      "week": "Week 4: Referral & Pipeline Conversion",
+      "focus": "Core focus",
+      "action": "Concrete tactical steps to execute this week."
+    }}
+  ],
+  "recruiter_advice": "Advice on LinkedIn positioning, referral outreach, and phone screens."
+}}
+Return ONLY valid JSON without markdown fences.
+"""
+        try:
+            res = ask_json(prompt, api_key=key)
+            if isinstance(res, dict) and "executive_verdict" in res:
+                res["ai_engine"] = "Google Gemini 2.0 Flash"
+                res["is_ai_generated"] = True
+                return res
+        except Exception as e:
+            logger.warning("Gemini placement strategy generation failed: %s", e)
+
+    # Fallback to Hugging Face local neural strategy
+    return hf_generate_placement_strategy(placement_data)

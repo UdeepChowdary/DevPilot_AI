@@ -9,41 +9,146 @@ import streamlit as st
 
 SIDEBAR_CSS = """
 <style>
+@import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&family=Manrope:wght@300;400;500;600;700;800&family=Sora:wght@400;500;600;700;800&display=swap');
+
 /* Hide Streamlit's auto-generated page navigation — we use our own */
 [data-testid="stSidebarNav"] {
     display: none !important;
 }
 
-section[data-testid="stSidebar"] {
-    background: linear-gradient(180deg, #0f0c29 0%, #1a1a2e 100%) !important;
+/* ── Typography & Global Reset ── */
+html, body, [class*="css"], .stMarkdown, p, span, label, input, textarea, select, button {
+    font-family: 'Manrope', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
 }
+h1, h2, h3, h4, h5, h6, .sidebar-logo-name {
+    font-family: 'Sora', sans-serif !important;
+    letter-spacing: -0.02em;
+}
+code, pre, .stat-num, .score-number, .kpi-value, .mono-data {
+    font-family: 'JetBrains Mono', monospace !important;
+    font-variant-numeric: tabular-nums;
+}
+
+/* ── Selection & Custom Scrollbars ── */
+::selection {
+    background: rgba(99, 102, 241, 0.4) !important;
+    color: #ffffff !important;
+}
+::-webkit-scrollbar {
+    width: 7px;
+    height: 7px;
+}
+::-webkit-scrollbar-track {
+    background: #0b0f19;
+}
+::-webkit-scrollbar-thumb {
+    background: #232938;
+    border-radius: 4px;
+}
+::-webkit-scrollbar-thumb:hover {
+    background: #374151;
+}
+
+/* ── Streamlit Native Component Polish ── */
+.stButton > button {
+    font-family: 'Sora', sans-serif !important;
+    font-weight: 600 !important;
+    border-radius: 10px !important;
+    border: 1px solid rgba(99, 102, 241, 0.3) !important;
+    background: linear-gradient(135deg, rgba(99,102,241,0.15) 0%, rgba(168,85,247,0.15) 100%) !important;
+    color: #f1f5f9 !important;
+    transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1) !important;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.2) !important;
+}
+.stButton > button:hover {
+    border-color: rgba(99, 102, 241, 0.6) !important;
+    background: linear-gradient(135deg, rgba(99,102,241,0.25) 0%, rgba(168,85,247,0.25) 100%) !important;
+    color: #ffffff !important;
+    transform: translateY(-1px) !important;
+    box-shadow: 0 6px 16px rgba(99, 102, 241, 0.25) !important;
+}
+.stButton > button:active {
+    transform: scale(0.98) !important;
+}
+
+div[data-baseweb="input"], div[data-baseweb="textarea"] {
+    border-radius: 10px !important;
+    border-color: rgba(255, 255, 255, 0.12) !important;
+    background-color: #121624 !important;
+    transition: border-color 0.2s ease !important;
+}
+div[data-baseweb="input"]:focus-within, div[data-baseweb="textarea"]:focus-within {
+    border-color: #6366f1 !important;
+    box-shadow: 0 0 0 1px #6366f1 !important;
+}
+
+div[data-testid="stTabs"] button[role="tab"] {
+    font-family: 'Sora', sans-serif !important;
+    font-weight: 600 !important;
+    font-size: 0.92rem !important;
+    color: #94a3b8 !important;
+    border-radius: 8px !important;
+    padding: 0.5rem 1.2rem !important;
+    transition: all 0.2s ease !important;
+}
+div[data-testid="stTabs"] button[role="tab"][aria-selected="true"] {
+    color: #ffffff !important;
+}
+
+/* ── Sidebar Container & Items ── */
+section[data-testid="stSidebar"] {
+    background: linear-gradient(180deg, #0b0d19 0%, #131726 100%) !important;
+    border-right: 1px solid rgba(255, 255, 255, 0.08);
+}
+div[data-testid="stSidebar"] a[data-testid="stPageLink-NavLink"] {
+    border-radius: 8px !important;
+    transition: background 0.15s ease, transform 0.15s ease !important;
+    padding: 0.45rem 0.75rem !important;
+}
+div[data-testid="stSidebar"] a[data-testid="stPageLink-NavLink"]:hover {
+    background: rgba(99, 102, 241, 0.12) !important;
+    transform: translateX(2px) !important;
+}
+
 .sidebar-logo-name {
-    font-size: 1.5rem;
+    font-size: 1.55rem;
     font-weight: 800;
     color: white;
     margin-top: 0.3rem;
+    letter-spacing: -0.02em;
 }
 .sidebar-logo-sub {
-    font-size: 0.75rem;
-    color: #6366f1;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.72rem;
+    color: #818cf8;
     font-weight: 600;
-    letter-spacing: 0.05em;
+    letter-spacing: 0.08em;
 }
 .sidebar-score-card {
-    background: rgba(99,102,241,0.08);
-    border: 1px solid rgba(99,102,241,0.2);
-    border-radius: 10px;
+    background: linear-gradient(135deg, rgba(99,102,241,0.08) 0%, rgba(30,30,46,0.3) 100%);
+    border: 1px solid rgba(99,102,241,0.22);
+    border-radius: 12px;
     padding: 0.75rem 1rem;
-    margin-bottom: 0.5rem;
+    margin-bottom: 0.55rem;
+    transition: border-color 0.2s ease, transform 0.2s ease;
+}
+.sidebar-score-card:hover {
+    border-color: rgba(99,102,241,0.45);
 }
 .sidebar-score-label {
-    font-size: 0.75rem;
+    font-size: 0.74rem;
     color: #94a3b8;
+    margin-bottom: 0.2rem;
+}
+.sidebar-score-val {
+    font-family: 'JetBrains Mono', monospace !important;
+    font-weight: 800;
+    line-height: 1;
 }
 .sidebar-gradient-divider {
     height: 1px;
     background: linear-gradient(90deg, transparent, rgba(99,102,241,0.35), transparent);
-    margin: 1rem 0;
+    margin: 1.1rem 0;
 }
 </style>
 """
@@ -92,8 +197,8 @@ def render_sidebar() -> None:
                 st.markdown(f"""
 <div class="sidebar-score-card" style="border-color: rgba(99,102,241,0.5); background: rgba(99,102,241,0.15);">
     <div class="sidebar-score-label" style="color: #c4b5fd; font-weight:700;">Placement Readiness Index</div>
-    <div style="font-size:1.8rem; font-weight:800; color:{color};">
-        {placement_score}<span style="font-size:0.9rem; color:#64748b;">/100</span>
+    <div class="sidebar-score-val" style="font-size:1.8rem; color:{color};">
+        {placement_score}<span style="font-size:0.9rem; color:#64748b; font-family:'Manrope',sans-serif;">/100</span>
     </div>
 </div>
 """, unsafe_allow_html=True)
@@ -103,8 +208,8 @@ def render_sidebar() -> None:
                 st.markdown(f"""
 <div class="sidebar-score-card">
     <div class="sidebar-score-label">Resume ATS Score</div>
-    <div style="font-size:1.6rem; font-weight:800; color:{color};">
-        {resume_score}<span style="font-size:0.9rem; color:#64748b;">/100</span>
+    <div class="sidebar-score-val" style="font-size:1.6rem; color:{color};">
+        {resume_score}<span style="font-size:0.9rem; color:#64748b; font-family:'Manrope',sans-serif;">/100</span>
     </div>
 </div>
 """, unsafe_allow_html=True)
@@ -114,8 +219,8 @@ def render_sidebar() -> None:
                 st.markdown(f"""
 <div class="sidebar-score-card">
     <div class="sidebar-score-label">GitHub Portfolio Score</div>
-    <div style="font-size:1.6rem; font-weight:800; color:{color};">
-        {github_score}<span style="font-size:0.9rem; color:#64748b;">/100</span>
+    <div class="sidebar-score-val" style="font-size:1.6rem; color:{color};">
+        {github_score}<span style="font-size:0.9rem; color:#64748b; font-family:'Manrope',sans-serif;">/100</span>
     </div>
 </div>
 """, unsafe_allow_html=True)
@@ -125,8 +230,8 @@ def render_sidebar() -> None:
                 st.markdown(f"""
 <div class="sidebar-score-card">
     <div class="sidebar-score-label">Mock Interview Readiness</div>
-    <div style="font-size:1.6rem; font-weight:800; color:{color};">
-        {interview_score}<span style="font-size:0.9rem; color:#64748b;">/100</span>
+    <div class="sidebar-score-val" style="font-size:1.6rem; color:{color};">
+        {interview_score}<span style="font-size:0.9rem; color:#64748b; font-family:'Manrope',sans-serif;">/100</span>
     </div>
 </div>
 """, unsafe_allow_html=True)
@@ -136,8 +241,8 @@ def render_sidebar() -> None:
                 st.markdown(f"""
 <div class="sidebar-score-card">
     <div class="sidebar-score-label">LeetCode Readiness</div>
-    <div style="font-size:1.6rem; font-weight:800; color:{color};">
-        {leetcode_score}<span style="font-size:0.9rem; color:#64748b;">/100</span>
+    <div class="sidebar-score-val" style="font-size:1.6rem; color:{color};">
+        {leetcode_score}<span style="font-size:0.9rem; color:#64748b; font-family:'Manrope',sans-serif;">/100</span>
     </div>
 </div>
 """, unsafe_allow_html=True)
@@ -147,7 +252,7 @@ def render_sidebar() -> None:
         # ── Footer ────────────────────────────────────────────────────────
         st.markdown("""
 <div style="font-size:0.75rem; color:#475569; text-align:center; line-height:1.6;">
-    Built for software engineering students<br>
+    <span style="color:#818cf8; font-weight:600; font-family:'JetBrains Mono',monospace;">v3.1.0</span> • Built for software engineers<br>
     <a href="https://github.com/UdeepChowdary/DevPilot_AI" target="_blank"
        style="color:#6366f1; text-decoration:none;">⭐ Star on GitHub</a>
 </div>
