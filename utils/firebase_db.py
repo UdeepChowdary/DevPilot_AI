@@ -111,6 +111,66 @@ def load_all_user_data(uid: str) -> Dict[str, Any]:
         return {}
 
 
+def _extract_module_data_from_session(module_name: str) -> Optional[Dict[str, Any]]:
+    """
+    Extract full state dictionary for a module from Streamlit session state on the main thread.
+    MUST be called on the main thread where st.session_state is available.
+    """
+    try:
+        import streamlit as st
+    except ImportError:
+        return None
+
+    if module_name == "resume":
+        return st.session_state.get("resume_results")
+
+    elif module_name == "github":
+        audit = st.session_state.get("gh_audit") or st.session_state.get("github_audit")
+        data = st.session_state.get("gh_data")
+        username = st.session_state.get("gh_user") or st.session_state.get("gh_target_user")
+        if not audit and not data:
+            return None
+        return {
+            "audit": audit,
+            "data": data,
+            "username": username,
+        }
+
+    elif module_name == "interview":
+        session = st.session_state.get("interview_session")
+        evals = st.session_state.get("interview_evaluations")
+        if not session and not evals:
+            return None
+        return {
+            "session": session,
+            "evaluations": evals or [],
+            "role": st.session_state.get("session_role"),
+            "style": st.session_state.get("session_style"),
+        }
+
+    elif module_name == "leetcode":
+        audit = st.session_state.get("leetcode_audit")
+        stats = st.session_state.get("lc_stats")
+        username = st.session_state.get("lc_username") or st.session_state.get("lc_target_user")
+        if not audit and not stats:
+            return None
+        return {
+            "audit": audit,
+            "stats": stats,
+            "username": username,
+        }
+
+    elif module_name == "placement":
+        return {
+            "readiness": st.session_state.get("placement_readiness"),
+            "milestones": st.session_state.get("placement_milestones"),
+            "pipeline": st.session_state.get("placement_pipeline"),
+            "target_date": str(st.session_state.get("target_placement_date")) if st.session_state.get("target_placement_date") else None,
+        }
+
+    return None
+
+
 def hydrate_session_from_cloud(uid: str) -> bool:
     """
     Hydrate Streamlit session state from Cloud Firestore when a user signs in.
@@ -124,6 +184,10 @@ def hydrate_session_from_cloud(uid: str) -> bool:
     all_modules = load_all_user_data(uid)
     if not all_modules:
         st.session_state["cloud_sync_status"] = "synced_empty"
+        logger.info("No cloud data found for user '%s'. Backing up active guest session.", uid)
+        # Auto-backup any active session data from guest mode into the new account
+        for mod in ["resume", "github", "interview", "leetcode", "placement"]:
+            sync_module_to_cloud(mod)
         return True
 
     # 1. Resume Module
@@ -132,15 +196,42 @@ def hydrate_session_from_cloud(uid: str) -> bool:
 
     # 2. GitHub Module
     if "github" in all_modules and all_modules["github"]:
-        st.session_state["github_audit"] = all_modules["github"]
+        gh_mod = all_modules["github"]
+        audit = gh_mod.get("audit") or gh_mod
+        data = gh_mod.get("data")
+        username = gh_mod.get("username")
+        st.session_state["github_audit"] = audit
+        st.session_state["gh_audit"] = audit
+        if data:
+            st.session_state["gh_data"] = data
+        if username:
+            st.session_state["gh_user"] = username
+            st.session_state["gh_target_user"] = username
 
     # 3. Mock Interview Module
     if "interview" in all_modules and all_modules["interview"]:
-        st.session_state["interview_session"] = all_modules["interview"]
+        int_mod = all_modules["interview"]
+        session = int_mod.get("session") or int_mod
+        st.session_state["interview_session"] = session
+        if "evaluations" in int_mod and int_mod["evaluations"]:
+            st.session_state["interview_evaluations"] = int_mod["evaluations"]
+        if "role" in int_mod and int_mod["role"]:
+            st.session_state["session_role"] = int_mod["role"]
+        if "style" in int_mod and int_mod["style"]:
+            st.session_state["session_style"] = int_mod["style"]
 
     # 4. LeetCode Module
     if "leetcode" in all_modules and all_modules["leetcode"]:
-        st.session_state["leetcode_audit"] = all_modules["leetcode"]
+        lc_mod = all_modules["leetcode"]
+        audit = lc_mod.get("audit") or lc_mod
+        stats = lc_mod.get("stats")
+        username = lc_mod.get("username")
+        st.session_state["leetcode_audit"] = audit
+        if stats:
+            st.session_state["lc_stats"] = stats
+        if username:
+            st.session_state["lc_username"] = username
+            st.session_state["lc_target_user"] = username
 
     # 5. Placement Dashboard Module
     if "placement" in all_modules and all_modules["placement"]:
@@ -162,35 +253,21 @@ def sync_module_to_cloud(module_name: str) -> bool:
     Extract active state for a specific module from st.session_state and sync to Firestore.
     Safe no-op if user is not logged in or Firestore is not configured.
     """
-    import streamlit as st
-
     user = get_current_user()
     if not user or not user.get("uid"):
         return False
 
     uid = user["uid"]
-
-    data_to_save: Optional[Dict[str, Any]] = None
-
-    if module_name == "resume":
-        data_to_save = st.session_state.get("resume_results")
-    elif module_name == "github":
-        data_to_save = st.session_state.get("github_audit")
-    elif module_name == "interview":
-        data_to_save = st.session_state.get("interview_session")
-    elif module_name == "leetcode":
-        data_to_save = st.session_state.get("leetcode_audit")
-    elif module_name == "placement":
-        data_to_save = {
-            "readiness": st.session_state.get("placement_readiness"),
-            "milestones": st.session_state.get("placement_milestones"),
-            "pipeline": st.session_state.get("placement_pipeline"),
-        }
+    data_to_save = _extract_module_data_from_session(module_name)
 
     if data_to_save:
         success = save_module_data(uid, module_name, data_to_save)
         if success:
-            st.session_state["cloud_sync_status"] = "synced"
+            try:
+                import streamlit as st
+                st.session_state["cloud_sync_status"] = "synced"
+            except Exception:
+                pass
             return True
 
     return False
@@ -199,6 +276,43 @@ def sync_module_to_cloud(module_name: str) -> bool:
 def sync_module_to_cloud_async(module_name: str) -> None:
     """
     Trigger a background sync of module state to Firestore so the UI does not block.
+    CRITICAL: Extracts the user profile and session data on the MAIN thread before spawning the worker,
+    because child threads in Streamlit do not possess the ScriptRunContext and cannot access st.session_state.
     """
-    thread = threading.Thread(target=sync_module_to_cloud, args=(module_name,), daemon=True)
+    user = get_current_user()
+    if not user or not user.get("uid"):
+        return
+
+    uid = user["uid"]
+    data_to_save = _extract_module_data_from_session(module_name)
+    if not data_to_save:
+        return
+
+    def _background_worker(target_uid: str, target_mod: str, payload: Dict[str, Any]):
+        try:
+            save_module_data(target_uid, target_mod, payload)
+        except Exception as e:
+            logger.error("Background sync failed for module '%s': %s", target_mod, e)
+
+    thread = threading.Thread(
+        target=_background_worker,
+        args=(uid, module_name, data_to_save),
+        daemon=True,
+    )
     thread.start()
+
+
+def sync_all_modules_to_cloud(uid: Optional[str] = None) -> bool:
+    """Sync all 5 modules from the active session to Firestore."""
+    user = get_current_user()
+    target_uid = uid or (user.get("uid") if user else None)
+    if not target_uid:
+        return False
+
+    success_any = False
+    for mod in ["resume", "github", "interview", "leetcode", "placement"]:
+        data = _extract_module_data_from_session(mod)
+        if data:
+            if save_module_data(target_uid, mod, data):
+                success_any = True
+    return success_any

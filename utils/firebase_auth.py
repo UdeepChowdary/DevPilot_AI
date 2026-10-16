@@ -176,6 +176,17 @@ def logout_user() -> None:
         import streamlit as st
         st.session_state["auth_user"] = None
         st.session_state["cloud_sync_status"] = "offline"
+        # Reset module session keys so next user or guest does not see lingering data
+        keys_to_clear = [
+            "resume_results",
+            "gh_data", "gh_audit", "gh_user", "gh_target_user", "github_audit", "gh_ai_critique",
+            "interview_session", "interview_evaluations", "interview_questions", "candidate_answers", "interview_active",
+            "lc_stats", "leetcode_audit", "lc_username", "lc_target_user",
+            "placement_readiness", "placement_milestones", "placement_pipeline", "ai_placement_strategy"
+        ]
+        for key in keys_to_clear:
+            if key in st.session_state:
+                del st.session_state[key]
     except Exception:
         pass
 

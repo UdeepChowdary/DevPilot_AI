@@ -141,3 +141,45 @@ class TestSessionHydrationAndSync:
     def test_sync_module_to_cloud_guest_mode_noop(self, mock_user):
         synced = sync_module_to_cloud("resume")
         assert not synced
+
+    @patch("utils.firebase_db.load_all_user_data")
+    def test_hydrate_session_github_and_leetcode_full_structures(self, mock_load_all):
+        import streamlit as st
+        mock_load_all.return_value = {
+            "github": {
+                "audit": {"total_score": 90, "grade": "S"},
+                "data": {"profile": {"login": "octocat"}, "stats": {"public_repos": 10}},
+                "username": "octocat",
+            },
+            "leetcode": {
+                "audit": {"total_score": 85},
+                "stats": {"username": "tourist", "total_solved": 500},
+                "username": "tourist",
+            },
+        }
+
+        ok = hydrate_session_from_cloud("uid_deep")
+        assert ok
+        assert st.session_state["github_audit"]["total_score"] == 90
+        assert st.session_state["gh_audit"]["grade"] == "S"
+        assert st.session_state["gh_data"]["profile"]["login"] == "octocat"
+        assert st.session_state["gh_user"] == "octocat"
+
+        assert st.session_state["leetcode_audit"]["total_score"] == 85
+        assert st.session_state["lc_stats"]["total_solved"] == 500
+        assert st.session_state["lc_username"] == "tourist"
+
+    @patch("utils.firebase_db.get_current_user")
+    @patch("utils.firebase_db.save_module_data")
+    def test_sync_module_to_cloud_async_extracts_on_main_thread(self, mock_save, mock_user):
+        import streamlit as st
+        import time
+        from utils.firebase_db import sync_module_to_cloud_async
+
+        mock_user.return_value = {"uid": "async_user_1"}
+        mock_save.return_value = True
+
+        st.session_state["resume_results"] = {"ats": {"total": 99}}
+        sync_module_to_cloud_async("resume")
+        time.sleep(0.1)  # wait brief moment for background thread
+        mock_save.assert_called_with("async_user_1", "resume", {"ats": {"total": 99}})

@@ -195,6 +195,24 @@ if "candidate_answers" not in st.session_state:
 
 # ─── SETUP VIEW (When no interview is active) ─────────────────────────────────
 if not st.session_state["interview_active"]:
+    # If candidate has a completed interview session from cloud or prior run
+    if st.session_state.get("interview_session"):
+        prev = st.session_state["interview_session"]
+        with st.expander(f"🏆 Last Completed Interview Scorecard — {prev.get('role', 'Candidate')} ({prev.get('total_score', 0)}/100 · {prev.get('grade', 'N/A')})", expanded=True):
+            st.info(f"**Interviewer Verdict:** {prev.get('verdict', 'Audit saved in cloud.')}")
+            m_c1, m_c2, m_c3 = st.columns(3)
+            with m_c1:
+                st.metric("Total Score", f"{prev.get('total_score', 0)} / 100")
+            with m_c2:
+                st.metric("Readiness Grade", prev.get('grade', 'N/A'))
+            with m_c3:
+                st.metric("Role Evaluated", prev.get('role', 'Software Engineer'))
+            if st.button("👁️ View Full Previous Interview Report", key="view_prev_int_btn", use_container_width=True):
+                st.session_state["interview_active"] = True
+                st.session_state["interview_questions"] = []
+                st.session_state["current_q_index"] = 999
+                st.rerun()
+
     col_cfg, col_ctx = st.columns([1.1, 1], gap="large")
 
     with col_cfg:
@@ -575,6 +593,13 @@ else:
                         role=st.session_state.get("session_role", "Software Engineer"),
                         company_style=st.session_state.get("session_style", "General Tech"),
                     )
+
+                    # Auto-sync answer progress to Firebase
+                    try:
+                        from utils.firebase_db import sync_module_to_cloud_async
+                        sync_module_to_cloud_async("interview")
+                    except Exception:
+                        pass
 
         # Display Evaluation if already evaluated for this question
         curr_eval = next((e for e in st.session_state["interview_evaluations"] if e["question_id"] == curr_q["id"]), None)

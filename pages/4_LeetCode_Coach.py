@@ -202,6 +202,11 @@ with col_in:
         }
         st.session_state["lc_stats"] = demo_stats
         st.session_state["leetcode_audit"] = audit_algorithmic_readiness(demo_stats)
+        try:
+            from utils.firebase_db import sync_module_to_cloud_async
+            sync_module_to_cloud_async("leetcode")
+        except Exception:
+            pass
         st.rerun()
 
 with col_opt:
@@ -236,6 +241,11 @@ with col_opt:
             }
             st.session_state["lc_stats"] = manual_stats
             st.session_state["leetcode_audit"] = audit_algorithmic_readiness(manual_stats)
+            try:
+                from utils.firebase_db import sync_module_to_cloud_async
+                sync_module_to_cloud_async("leetcode")
+            except Exception:
+                pass
             st.rerun()
 
 st.markdown("<br>", unsafe_allow_html=True)
