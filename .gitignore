@@ -18,6 +18,8 @@ ENV/
 
 # Streamlit config / cache
 .streamlit/secrets.toml
+*secrets*.toml
+secrets_for_streamlit_cloud.toml
 
 # Firebase Service Account Keys & Local Session Cache
 *serviceAccount*.json
