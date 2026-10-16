@@ -19,6 +19,7 @@ FIREBASE_TOKEN_BASE = "https://securetoken.googleapis.com/v1"
 AUTH_ERROR_MESSAGES = {
     "EMAIL_EXISTS": "An account with this email address already exists. Please sign in instead.",
     "OPERATION_NOT_ALLOWED": "Password sign-in is not enabled in Firebase Console. Please enable it under Authentication > Sign-in method.",
+    "CONFIGURATION_NOT_FOUND": "Firebase Authentication is not activated yet in Firebase Console. Please open your Firebase Console (Build > Authentication), click 'Get Started', and enable Email/Password.",
     "TOO_MANY_ATTEMPTS_TRY_LATER": "Too many failed attempts. Access to this account has been temporarily disabled. Try again later.",
     "EMAIL_NOT_FOUND": "No account found with this email address.",
     "INVALID_PASSWORD": "Incorrect password. Please try again.",

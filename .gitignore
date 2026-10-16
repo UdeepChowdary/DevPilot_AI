@@ -19,6 +19,12 @@ ENV/
 # Streamlit config / cache
 .streamlit/secrets.toml
 
+# Firebase Service Account Keys
+*serviceAccount*.json
+*service-account*.json
+firebase-credentials.json
+
+
 # OS & Editor files
 .DS_Store
 Thumbs.db
