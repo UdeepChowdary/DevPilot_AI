@@ -242,6 +242,12 @@ def hydrate_session_from_cloud(uid: str) -> bool:
             st.session_state["placement_milestones"] = place_data["milestones"]
         if "pipeline" in place_data and place_data["pipeline"]:
             st.session_state["placement_pipeline"] = place_data["pipeline"]
+        if "target_date" in place_data and place_data["target_date"]:
+            try:
+                from datetime import date
+                st.session_state["target_placement_date"] = date.fromisoformat(str(place_data["target_date"]))
+            except Exception:
+                st.session_state["target_placement_date"] = place_data["target_date"]
 
     st.session_state["cloud_sync_status"] = "synced"
     logger.info("Streamlit session hydrated from Firestore for user '%s'.", uid)

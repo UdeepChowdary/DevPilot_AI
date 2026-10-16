@@ -19,10 +19,11 @@ ENV/
 # Streamlit config / cache
 .streamlit/secrets.toml
 
-# Firebase Service Account Keys
+# Firebase Service Account Keys & Local Session Cache
 *serviceAccount*.json
 *service-account*.json
 firebase-credentials.json
+.devpilot_session*
 
 
 # OS & Editor files

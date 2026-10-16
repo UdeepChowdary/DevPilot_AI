@@ -140,6 +140,12 @@ class TestFirebaseAuthRestEndpoints:
 class TestSessionStateManagement:
     """Tests for current user session state caching."""
 
+    @pytest.fixture(autouse=True)
+    def isolate_session_cache(self, tmp_path):
+        test_cache = str(tmp_path / ".test_session.json")
+        with patch("utils.firebase_auth.get_session_cache_files", return_value=(test_cache,)):
+            yield
+
     def test_session_user_roundtrip(self):
         user_payload = {"uid": "u999", "email": "test@devpilot.ai", "id_token": "tok"}
         set_current_user(user_payload)
@@ -153,3 +159,79 @@ class TestSessionStateManagement:
         custom_err = {"error": {"message": "CUSTOM_ERROR_CODE"}}
         parsed = _parse_error(custom_err)
         assert parsed == "CUSTOM_ERROR_CODE"
+
+    def test_session_token_generation_and_verification(self):
+        from utils.firebase_auth import generate_session_token, verify_session_token
+        token = generate_session_token("uid_persistent_1", "persistent@devpilot.ai")
+        assert token is not None
+        assert len(token) > 50
+
+        verified = verify_session_token(token)
+        assert verified is not None
+        assert verified["uid"] == "uid_persistent_1"
+        assert verified["email"] == "persistent@devpilot.ai"
+
+    def test_tampered_session_token_rejected(self):
+        from utils.firebase_auth import generate_session_token, verify_session_token
+        token = generate_session_token("uid_legit", "legit@devpilot.ai")
+        tampered = token[:-4] + "zzzz"
+        assert verify_session_token(tampered) is None
+
+    @patch("utils.firebase_db.hydrate_session_from_cloud")
+    def test_init_auth_recovers_user_from_query_params_after_f5(self, mock_hydrate, tmp_path):
+        import streamlit as st
+        from utils.firebase_auth import (
+            generate_session_token,
+            init_auth,
+            logout_user,
+            clear_persisted_session,
+            SESSION_QUERY_PARAM,
+        )
+
+        test_cache = str(tmp_path / ".test_session.json")
+        with patch("utils.firebase_auth.get_session_cache_files", return_value=(test_cache,)):
+            # Simulate F5 reload where session_state was cleared but query_params persisted
+            logout_user()
+            clear_persisted_session()
+            st.session_state["auth_user"] = None
+            token = generate_session_token("f5_user", "f5@devpilot.ai")
+            st.query_params[SESSION_QUERY_PARAM] = token
+
+            recovered = init_auth()
+            assert recovered is not None
+            assert recovered["uid"] == "f5_user"
+            assert recovered["email"] == "f5@devpilot.ai"
+            mock_hydrate.assert_called_once_with("f5_user")
+            logout_user()
+            clear_persisted_session()
+
+    @patch("utils.firebase_db.hydrate_session_from_cloud")
+    def test_init_auth_recovers_user_from_file_cache(self, mock_hydrate, tmp_path):
+        import streamlit as st
+        from utils.firebase_auth import (
+            persist_user_session,
+            init_auth,
+            logout_user,
+            clear_persisted_session,
+            SESSION_QUERY_PARAM,
+        )
+
+        test_cache = str(tmp_path / ".test_session.json")
+        with patch("utils.firebase_auth.get_session_cache_files", return_value=(test_cache,)):
+            logout_user()
+            clear_persisted_session()
+
+            # Persist a user to file cache
+            persist_user_session({"uid": "file_cache_user", "email": "cached@devpilot.ai"})
+            # Remove query param so it must fall back to file cache
+            if SESSION_QUERY_PARAM in st.query_params:
+                del st.query_params[SESSION_QUERY_PARAM]
+            st.session_state["auth_user"] = None
+
+            recovered = init_auth()
+            assert recovered is not None
+            assert recovered["uid"] == "file_cache_user"
+            assert recovered["email"] == "cached@devpilot.ai"
+            mock_hydrate.assert_called_with("file_cache_user")
+
+            logout_user()

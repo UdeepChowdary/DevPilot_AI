@@ -159,6 +159,10 @@ def render_sidebar() -> None:
     Render the shared DevPilot AI sidebar with navigation, scores, and footer.
     Call this at the top of every page file after st.set_page_config().
     """
+    # Restore persistent user authentication & cloud data before page content renders
+    from utils.firebase_auth import init_auth
+    init_auth()
+
     st.markdown(SIDEBAR_CSS, unsafe_allow_html=True)
 
     with st.sidebar:

@@ -7,10 +7,18 @@ Integrates seamlessly into Streamlit session state with Guest Mode fallback.
 
 import logging
 import requests
+import os
+import time
+import hmac
+import hashlib
+import json
+import base64
 from typing import Optional, Dict, Any, Tuple
 from utils.firebase_client import get_firebase_web_api_key, is_firebase_auth_configured
 
 logger = logging.getLogger(__name__)
+
+SESSION_QUERY_PARAM = "auth_session"
 
 FIREBASE_AUTH_BASE = "https://identitytoolkit.googleapis.com/v1"
 FIREBASE_TOKEN_BASE = "https://securetoken.googleapis.com/v1"
@@ -152,6 +160,154 @@ def send_password_reset(email: str) -> Tuple[bool, str]:
 
 # ─── Streamlit Session State Integration ──────────────────────────────────────
 
+SESSION_CACHE_FILE = os.path.join(os.path.dirname(os.path.dirname(__file__)), ".devpilot_session.json")
+USER_SESSION_CACHE_FILE = os.path.join(os.path.expanduser("~"), ".devpilot_session.json")
+
+
+def get_session_cache_files() -> Tuple[str, ...]:
+    """Return all session cache file locations (project root and user home)."""
+    return (SESSION_CACHE_FILE, USER_SESSION_CACHE_FILE)
+
+
+def _get_auth_signing_key() -> str:
+    """Retrieve secret key for signing session tokens."""
+    return get_firebase_web_api_key() or os.getenv("SECRET_KEY", "devpilot-ai-default-auth-salt")
+
+
+def generate_session_token(uid: str, email: str, expiry_days: int = 30) -> str:
+    """Generate a tamper-proof HMAC-signed session token for persistent browser sessions."""
+    payload = {
+        "uid": uid,
+        "email": email,
+        "exp": int(time.time()) + (expiry_days * 86400),
+    }
+    payload_bytes = json.dumps(payload, separators=(',', ':')).encode('utf-8')
+    sig = hmac.new(_get_auth_signing_key().encode('utf-8'), payload_bytes, hashlib.sha256).digest()
+    p_b64 = base64.urlsafe_b64encode(payload_bytes).decode('ascii').rstrip('=')
+    s_b64 = base64.urlsafe_b64encode(sig).decode('ascii').rstrip('=')
+    return f"{p_b64}.{s_b64}"
+
+
+def verify_session_token(token: str) -> Optional[Dict[str, Any]]:
+    """Verify an HMAC-signed session token and return user dict if valid and unexpired."""
+    try:
+        if not token or "." not in token:
+            return None
+        p_b64, s_b64 = token.split(".", 1)
+        # Restore padding
+        p_b64 += "=" * ((4 - len(p_b64) % 4) % 4)
+        s_b64 += "=" * ((4 - len(s_b64) % 4) % 4)
+        payload_bytes = base64.urlsafe_b64decode(p_b64.encode('ascii'))
+        sig = base64.urlsafe_b64decode(s_b64.encode('ascii'))
+        expected_sig = hmac.new(_get_auth_signing_key().encode('utf-8'), payload_bytes, hashlib.sha256).digest()
+        if not hmac.compare_digest(sig, expected_sig):
+            return None
+        payload = json.loads(payload_bytes.decode('utf-8'))
+        if time.time() > payload.get("exp", 0):
+            return None
+        return {
+            "uid": payload["uid"],
+            "email": payload["email"],
+            "display_name": payload.get("email", "").split("@")[0],
+        }
+    except Exception:
+        return None
+
+
+def persist_user_session(user_data: Dict[str, Any]) -> None:
+    """Persist user session token into Streamlit query params and local cache files so reload (F5) doesn't sign out."""
+    if not user_data or not user_data.get("uid"):
+        return
+    token = generate_session_token(user_data["uid"], user_data.get("email", ""))
+    # 1. Browser URL query param
+    try:
+        import streamlit as st
+        st.query_params[SESSION_QUERY_PARAM] = token
+    except Exception:
+        pass
+    # 2. Local session cache files (project root and user home fallback)
+    cache_payload = {"token": token, "email": user_data.get("email"), "uid": user_data["uid"]}
+    for cache_path in get_session_cache_files():
+        try:
+            with open(cache_path, "w", encoding="utf-8") as f:
+                json.dump(cache_payload, f)
+        except Exception as e:
+            logger.debug("Could not write local session cache to %s: %s", cache_path, e)
+
+
+def clear_persisted_session() -> None:
+    """Remove session token from query params and local cache files upon logout."""
+    try:
+        import streamlit as st
+        if SESSION_QUERY_PARAM in st.query_params:
+            del st.query_params[SESSION_QUERY_PARAM]
+    except Exception:
+        pass
+    for cache_path in get_session_cache_files():
+        try:
+            if os.path.exists(cache_path):
+                os.remove(cache_path)
+        except Exception as e:
+            logger.debug("Could not remove local session cache at %s: %s", cache_path, e)
+
+
+def init_auth() -> Optional[Dict[str, Any]]:
+    """
+    Initialize and recover authenticated user session.
+    Checks st.session_state first, then st.query_params, then local cache files.
+    If recovered, auto-hydrates data from Firestore.
+    """
+    import streamlit as st
+
+    current_user = get_current_user()
+    if current_user and current_user.get("uid"):
+        # Keep query param in sync in case user navigated across pages
+        try:
+            if SESSION_QUERY_PARAM not in st.query_params:
+                persist_user_session(current_user)
+        except Exception:
+            pass
+        return current_user
+
+    token = None
+    # 1. Check query_params
+    try:
+        token = st.query_params.get(SESSION_QUERY_PARAM)
+    except Exception:
+        pass
+
+    # 2. Check local file caches if query_params was empty (e.g. page navigation stripped it)
+    if not token:
+        for cache_path in get_session_cache_files():
+            if os.path.exists(cache_path):
+                try:
+                    with open(cache_path, "r", encoding="utf-8") as f:
+                        cached = json.load(f)
+                        t = cached.get("token")
+                        if t:
+                            token = t
+                            break
+                except Exception:
+                    continue
+
+    if token:
+        user_info = verify_session_token(token)
+        if user_info and user_info.get("uid"):
+            set_current_user(user_info)
+            persist_user_session(user_info)
+            try:
+                from utils.firebase_db import hydrate_session_from_cloud
+                hydrate_session_from_cloud(user_info["uid"])
+            except Exception as e:
+                logger.error("Error during cloud session hydration: %s", e)
+            logger.info("Restored persistent user session for '%s'.", user_info["email"])
+            return user_info
+        else:
+            clear_persisted_session()
+
+    return None
+
+
 def get_current_user() -> Optional[Dict[str, Any]]:
     """Retrieve the currently authenticated user from Streamlit session_state."""
     try:
@@ -176,6 +332,7 @@ def logout_user() -> None:
         import streamlit as st
         st.session_state["auth_user"] = None
         st.session_state["cloud_sync_status"] = "offline"
+        clear_persisted_session()
         # Reset module session keys so next user or guest does not see lingering data
         keys_to_clear = [
             "resume_results",
@@ -201,7 +358,7 @@ def render_auth_section(widget_key: str = "sidebar_auth") -> None:
     from utils.firebase_client import is_firebase_auth_configured
     from utils.firebase_db import hydrate_session_from_cloud, sync_module_to_cloud
 
-    current_user = get_current_user()
+    current_user = init_auth()
     auth_available = is_firebase_auth_configured()
 
     if current_user:
@@ -250,6 +407,7 @@ def render_auth_section(widget_key: str = "sidebar_auth") -> None:
                     ok, msg, udata = sign_in(in_email, in_pass)
                     if ok and udata:
                         set_current_user(udata)
+                        persist_user_session(udata)
                         hydrate_session_from_cloud(udata["uid"])
                         st.success("✅ Signed in! Cloud profile restored.")
                         st.rerun()
@@ -266,6 +424,7 @@ def render_auth_section(widget_key: str = "sidebar_auth") -> None:
                     ok, msg, udata = sign_up(up_email, up_pass)
                     if ok and udata:
                         set_current_user(udata)
+                        persist_user_session(udata)
                         for mod in ["resume", "github", "interview", "leetcode", "placement"]:
                             sync_module_to_cloud(mod)
                         st.success("✅ Account created and synced!")
