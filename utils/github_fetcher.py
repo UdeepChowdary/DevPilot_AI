@@ -7,6 +7,7 @@ Includes retry logic for transient errors and pagination for users with 100+ rep
 
 import logging
 import os
+import re
 from typing import Dict, List, Any, Optional
 
 import requests
@@ -60,14 +61,28 @@ def _get_headers(token: Optional[str] = None) -> Dict[str, str]:
     return headers
 
 
+GITHUB_USERNAME_REGEX = re.compile(r"^[a-zA-Z0-9](?:[a-zA-Z0-9]|-(?=[a-zA-Z0-9])){0,38}$")
+
+
+def validate_github_username(username: str) -> str:
+    """Validate that the GitHub username strictly adheres to GitHub handle specifications."""
+    clean = (username or "").strip()
+    if not clean:
+        raise ValueError("GitHub username cannot be empty.")
+    if not GITHUB_USERNAME_REGEX.match(clean):
+        raise ValueError(
+            "Invalid GitHub username. Username must contain only alphanumeric characters and single hyphens, "
+            "cannot start or end with a hyphen, and must be at most 39 characters."
+        )
+    return clean
+
+
 def get_user_profile(username: str, token: Optional[str] = None) -> Dict[str, Any]:
     """
     Fetch public profile metadata for a given GitHub username.
     Returns profile dict or raises an exception with a user-friendly message.
     """
-    clean_username = username.strip()
-    if not clean_username:
-        raise ValueError("GitHub username cannot be empty.")
+    clean_username = validate_github_username(username)
 
     url = f"{GITHUB_API_BASE}/users/{clean_username}"
     response = _session.get(url, headers=_get_headers(token), timeout=12)
@@ -98,7 +113,7 @@ def get_user_repos(
     Fetch public repositories for a given GitHub user (sorted by most recently updated).
     Paginates through all pages to support users with more than 100 repositories.
     """
-    clean_username = username.strip()
+    clean_username = validate_github_username(username)
     all_repos: List[Dict[str, Any]] = []
     page = 1
     per_page = 100

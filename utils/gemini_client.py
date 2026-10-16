@@ -30,8 +30,9 @@ def get_active_gemini_key(api_key: Optional[str] = None) -> str:
 
 def set_active_gemini_key(new_key: str) -> None:
     """
-    Persist the Gemini API key across Streamlit session state and
-    the current process environment so all sub-apps immediately share it.
+    Persist the Gemini API key in the user's Streamlit session state
+    so all sub-apps in the current session immediately share it, without
+    contaminating process-global environment variables across other user sessions.
     """
     cleaned = (new_key or "").strip()
     try:
@@ -39,19 +40,15 @@ def set_active_gemini_key(new_key: str) -> None:
         st.session_state["gemini_api_key"] = cleaned
     except Exception:
         pass
-    if cleaned:
-        os.environ["GEMINI_API_KEY"] = cleaned
 
 
 def clear_active_gemini_key() -> None:
-    """Clear the active Gemini API key from session state and environment."""
+    """Clear the active Gemini API key from the current user session state."""
     try:
         import streamlit as st
         st.session_state["gemini_api_key"] = ""
     except Exception:
         pass
-    if "GEMINI_API_KEY" in os.environ:
-        del os.environ["GEMINI_API_KEY"]
 
 
 def render_byok_section(widget_key: str = "byok_gemini", compact: bool = False, title: Optional[str] = None) -> str:

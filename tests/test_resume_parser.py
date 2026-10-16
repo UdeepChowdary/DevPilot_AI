@@ -5,11 +5,14 @@ header filtering, deduplication, and action-verb line detection.
 """
 
 import pytest
+import io
 from utils.resume_parser import (
+    extract_text,
     extract_text_from_txt,
     detect_sections,
     extract_bullet_points,
     SECTION_PATTERNS,
+    MAX_RESUME_SIZE,
 )
 
 
@@ -200,3 +203,23 @@ class TestSectionPatterns:
         clean = re.sub(r"^[\W_]+|[\W_]+$", "", header).strip()
         pattern = SECTION_PATTERNS[section]
         assert pattern.match(clean), f"'{header}' should match section '{section}'"
+
+
+class TestExtractTextFileLimits:
+    def test_oversized_file_rejected(self):
+        class MockUploadedFile(io.BytesIO):
+            name = "huge_resume.txt"
+
+        huge_payload = b"A" * (MAX_RESUME_SIZE + 50)
+        mock_file = MockUploadedFile(huge_payload)
+        with pytest.raises(ValueError, match="exceeds the maximum allowed size"):
+            extract_text(mock_file)
+
+    def test_valid_size_file_processed(self):
+        class MockUploadedFile(io.BytesIO):
+            name = "normal_resume.txt"
+
+        valid_payload = b"Jane Doe\nSoftware Engineer\nPython, Docker"
+        mock_file = MockUploadedFile(valid_payload)
+        res = extract_text(mock_file)
+        assert "Jane Doe" in res

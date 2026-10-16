@@ -10,6 +10,7 @@ from utils.github_scorer import (
     score_repo_quality,
     audit_github_profile,
 )
+from utils.github_fetcher import validate_github_username
 
 
 # ─── score_profile_completeness ───────────────────────────────────────────────
@@ -225,3 +226,43 @@ class TestAuditGithubProfile:
             total_from_dims = sum(d["score"] for d in dims.values())
             # Allow small floating point tolerance
             assert abs(total_from_dims - result["total_score"]) <= 1.0
+
+
+class TestValidateGitHubUsername:
+    def test_valid_usernames_accepted(self):
+        assert validate_github_username("torvalds") == "torvalds"
+        assert validate_github_username("octocat-123") == "octocat-123"
+        assert validate_github_username("UdeepChowdary") == "UdeepChowdary"
+
+    def test_empty_username_rejected(self):
+        with pytest.raises(ValueError, match="cannot be empty"):
+            validate_github_username("")
+        with pytest.raises(ValueError, match="cannot be empty"):
+            validate_github_username("   ")
+
+    def test_path_traversal_rejected(self):
+        with pytest.raises(ValueError, match="Invalid GitHub username"):
+            validate_github_username("../orgs/google")
+        with pytest.raises(ValueError, match="Invalid GitHub username"):
+            validate_github_username("user/repo")
+
+    def test_invalid_characters_rejected(self):
+        with pytest.raises(ValueError, match="Invalid GitHub username"):
+            validate_github_username("user?query=1")
+        with pytest.raises(ValueError, match="Invalid GitHub username"):
+            validate_github_username("<script>alert(1)</script>")
+        with pytest.raises(ValueError, match="Invalid GitHub username"):
+            validate_github_username("user name")
+
+    def test_hyphen_rules_enforced(self):
+        with pytest.raises(ValueError, match="Invalid GitHub username"):
+            validate_github_username("-invalid")
+        with pytest.raises(ValueError, match="Invalid GitHub username"):
+            validate_github_username("invalid-")
+        with pytest.raises(ValueError, match="Invalid GitHub username"):
+            validate_github_username("invalid--doublehyphen")
+
+    def test_length_limit_enforced(self):
+        too_long = "a" * 40
+        with pytest.raises(ValueError, match="Invalid GitHub username"):
+            validate_github_username(too_long)

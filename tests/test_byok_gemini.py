@@ -49,25 +49,27 @@ def test_session_state_takes_priority_over_env():
         assert res == "session-key-abcde"
 
 
-def test_set_active_gemini_key_syncs_to_env():
+def test_set_active_gemini_key_session_isolated():
     mock_st = MagicMock()
     mock_st.session_state = {}
 
     with patch.dict("sys.modules", {"streamlit": mock_st}):
         set_active_gemini_key("user-pasted-key-xyz")
         assert mock_st.session_state["gemini_api_key"] == "user-pasted-key-xyz"
-        assert os.environ.get("GEMINI_API_KEY") == "user-pasted-key-xyz"
+        # Must NOT pollute os.environ across concurrent sessions
+        assert os.environ.get("GEMINI_API_KEY") != "user-pasted-key-xyz"
 
 
 def test_clear_active_gemini_key():
     mock_st = MagicMock()
     mock_st.session_state = {"gemini_api_key": "to-be-cleared"}
-    os.environ["GEMINI_API_KEY"] = "to-be-cleared"
+    os.environ["GEMINI_API_KEY"] = "server-preconfigured-key"
 
     with patch.dict("sys.modules", {"streamlit": mock_st}):
         clear_active_gemini_key()
         assert mock_st.session_state.get("gemini_api_key") == ""
-        assert "GEMINI_API_KEY" not in os.environ
+        # Clearing user session key must NOT delete server-level env key
+        assert os.environ.get("GEMINI_API_KEY") == "server-preconfigured-key"
 
 
 def test_all_subapps_pick_up_byok_key():

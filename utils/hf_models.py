@@ -15,37 +15,42 @@ import os
 import re
 import json
 import logging
+import threading
 from typing import Dict, List, Any, Optional
 
 logger = logging.getLogger(__name__)
 
-# Global cache for lazy-loaded HuggingFace pipelines
+# Global cache & thread-safe lock for lazy-loaded HuggingFace pipelines
 _HF_PIPELINES: Dict[str, Any] = {}
+_PIPELINE_LOCK = threading.Lock()
 
 
 def get_hf_pipeline(task: str = "text2text-generation", model_name: str = "t5-small"):
     """
-    Lazy-load and cache a Hugging Face pipeline.
+    Lazy-load and cache a Hugging Face pipeline in a thread-safe manner.
     Falls back gracefully to None if transformers fails or models cannot be downloaded.
     """
     cache_key = f"{task}:{model_name}"
     if cache_key in _HF_PIPELINES:
         return _HF_PIPELINES[cache_key]
 
-    try:
-        from transformers import pipeline
-        # CPU-safe pipeline initialization
-        pipe = pipeline(
-            task,
-            model=model_name,
-            max_length=256,
-            do_sample=False,
-        )
-        _HF_PIPELINES[cache_key] = pipe
-        return pipe
-    except Exception as e:
-        logger.warning("Could not initialize HuggingFace pipeline '%s': %s", cache_key, e)
-        return None
+    with _PIPELINE_LOCK:
+        if cache_key in _HF_PIPELINES:
+            return _HF_PIPELINES[cache_key]
+        try:
+            from transformers import pipeline
+            # CPU-safe pipeline initialization
+            pipe = pipeline(
+                task,
+                model=model_name,
+                max_length=256,
+                do_sample=False,
+            )
+            _HF_PIPELINES[cache_key] = pipe
+            return pipe
+        except Exception as e:
+            logger.warning("Could not initialize HuggingFace pipeline '%s': %s", cache_key, e)
+            return None
 
 
 def is_hf_available() -> bool:

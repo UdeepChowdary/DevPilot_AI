@@ -313,11 +313,15 @@ if "gh_data" in st.session_state and "gh_audit" in st.session_state:
     grade_color = audit["grade_color"]
 
     # ── Top Profile Overview Card ──
-    avatar = profile.get("avatar_url", "")
-    p_name = profile.get("name") or profile.get("login")
-    p_bio = profile.get("bio") or "*(No bio provided on profile)*"
-    p_location = profile.get("location") or "Worldwide"
-    p_company = profile.get("company") or "Independent"
+    raw_avatar = str(profile.get("avatar_url", "") or "")
+    avatar = html.escape(raw_avatar) if raw_avatar.startswith(("http://", "https://")) else ""
+    p_name = html.escape(str(profile.get("name") or profile.get("login") or "Developer"))
+    p_login = html.escape(str(profile.get("login") or ""))
+    p_bio = html.escape(str(profile.get("bio") or "(No bio provided on profile)"))
+    p_location = html.escape(str(profile.get("location") or "Worldwide"))
+    p_company = html.escape(str(profile.get("company") or "Independent"))
+    raw_html_url = str(profile.get("html_url") or "#")
+    p_html_url = html.escape(raw_html_url) if raw_html_url.startswith(("http://", "https://", "#")) else "#"
 
     col_prof, col_gauge = st.columns([2.3, 1.2], gap="medium")
 
@@ -327,8 +331,8 @@ if "gh_data" in st.session_state and "gh_audit" in st.session_state:
     <div style="display: flex; gap: 1.5rem; align-items: center; flex-wrap: wrap;">
         <img src="{avatar}" width="96" height="96" style="border-radius: 50%; border: 3px solid #6366f1;" />
         <div style="flex: 1; min-width: 240px;">
-            <div class="profile-name">{p_name} <a href="{profile.get('html_url')}" target="_blank" style="color: #58a6ff; font-size: 1rem; text-decoration: none;">↗</a></div>
-            <div class="profile-login">@{profile.get('login')}</div>
+            <div class="profile-name">{p_name} <a href="{p_html_url}" target="_blank" rel="noopener noreferrer" style="color: #58a6ff; font-size: 1rem; text-decoration: none;">↗</a></div>
+            <div class="profile-login">@{p_login}</div>
             <div class="profile-bio">{p_bio}</div>
             <div>
                 <span class="stat-pill">{p_location}</span>
@@ -527,15 +531,18 @@ if "gh_data" in st.session_state and "gh_audit" in st.session_state:
                 topic_badge = '<span class="badge-pass">✔ Topics</span>' if r["has_topics"] else '<span class="badge-fail">✘ No Topics</span>'
 
                 r_name = html.escape(str(r.get("name") or ""))
-                r_url = r.get("html_url") or "#"
+                raw_url = str(r.get("html_url") or "#")
+                r_url = html.escape(raw_url) if raw_url.startswith(("http://", "https://", "#")) else "#"
                 r_desc = html.escape(str(r.get("description") or "No description provided."))
                 r_lang = html.escape(str(r.get("language") or "Other"))
                 r_stars = r.get("stars", 0)
                 r_health = r.get("health_score", 0)
 
+                raw_hp = str(r.get("homepage") or "").strip()
+                is_valid_hp = raw_hp.startswith(("http://", "https://"))
                 demo_link_html = (
-                    f' <a href="{html.escape(r["homepage"])}" target="_blank" style="color: #22c55e; margin-left: 0.8rem; font-size: 0.85rem;">🔗 Open Live Demo</a>'
-                    if (r.get("has_homepage") and r.get("homepage"))
+                    f' <a href="{html.escape(raw_hp)}" target="_blank" rel="noopener noreferrer" style="color: #22c55e; margin-left: 0.8rem; font-size: 0.85rem;">🔗 Open Live Demo</a>'
+                    if (r.get("has_homepage") and is_valid_hp)
                     else ""
                 )
 
@@ -543,7 +550,7 @@ if "gh_data" in st.session_state and "gh_audit" in st.session_state:
                     f'<div class="repo-card">'
                     f'<div style="display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap;">'
                     f'<div>'
-                    f'<a class="repo-title" href="{r_url}" target="_blank">{r_name}</a>{demo_link_html}'
+                    f'<a class="repo-title" href="{r_url}" target="_blank" rel="noopener noreferrer">{r_name}</a>{demo_link_html}'
                     f'</div>'
                     f'<div>'
                     f'<span class="stat-pill">⭐ {r_stars} stars</span>'
@@ -668,16 +675,20 @@ if "gh_data" in st.session_state and "gh_audit" in st.session_state:
             st.caption("Quantified bullet points based on your GitHub projects formatted for engineering resumes.")
             
             for b in critique.get("resume_bullets", []):
+                b_repo = html.escape(str(b.get('repo_name') or ''))
+                b_lang = html.escape(str(b.get('language') or ''))
+                b_xyz = html.escape(str(b.get('bullet_xyz') or ''))
+                b_tip = html.escape(str(b.get('recruiter_tip') or ''))
                 st.markdown(f"""
 <div class="bullet-box">
     <div style="font-weight: 700; color: #a855f7; margin-bottom: 0.4rem;">
-        {b.get('repo_name')} &nbsp;<span style="color:#8b949e; font-size:0.85rem;">({b.get('language')})</span>
+        {b_repo} &nbsp;<span style="color:#8b949e; font-size:0.85rem;">({b_lang})</span>
     </div>
     <div style="color: #f0f6fc; font-size: 0.95rem; line-height: 1.6; margin-bottom: 0.6rem;">
-        • {b.get('bullet_xyz')}
+        • {b_xyz}
     </div>
     <div style="color: #94a3b8; font-size: 0.85rem;">
-        <em>Interview Tip:</em> {b.get('recruiter_tip')}
+        <em>Interview Tip:</em> {b_tip}
     </div>
 </div>
 """, unsafe_allow_html=True)

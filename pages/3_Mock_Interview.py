@@ -361,11 +361,11 @@ else:
             with col_st:
                 st.markdown("##### Candidate Strengths")
                 for s in summary.get("all_strengths", []):
-                    st.markdown(f"<div class='strength-item'>✓ {s}</div>", unsafe_allow_html=True)
+                    st.markdown(f"<div class='strength-item'>✓ {html.escape(str(s))}</div>", unsafe_allow_html=True)
             with col_im:
                 st.markdown("##### Key Areas to Practice")
                 for imp in summary.get("all_improvements", []):
-                    st.markdown(f"<div class='weakness-item'>• {imp}</div>", unsafe_allow_html=True)
+                    st.markdown(f"<div class='weakness-item'>• {html.escape(str(imp))}</div>", unsafe_allow_html=True)
 
         with col_res2:
             # Score Gauge
@@ -449,11 +449,14 @@ else:
         st.progress(progress_val, text=f"Question {curr_idx + 1} of {total_q}")
 
         # Question Header Card
+        q_cat = html.escape(str(curr_q.get('category', 'Technical Question')))
+        q_text = html.escape(str(curr_q.get('question', '')))
+        q_ctx = html.escape(str(curr_q.get('context_reason', 'Evaluates core engineering capabilities.')))
         st.markdown(f"""
 <div class="question-card">
-    <span class="question-category">{curr_q.get('category', 'Technical Question')}</span>
-    <div class="question-text">{curr_q['question']}</div>
-    <div class="question-context"><b>Context:</b> {curr_q.get('context_reason', 'Evaluates core engineering capabilities.')}</div>
+    <span class="question-category">{q_cat}</span>
+    <div class="question-text">{q_text}</div>
+    <div class="question-context"><b>Context:</b> {q_ctx}</div>
 </div>
 """, unsafe_allow_html=True)
 
@@ -601,11 +604,11 @@ else:
             with col_pos:
                 st.markdown("##### Strengths:")
                 for s in curr_eval.get("strengths", []):
-                    st.markdown(f"<div class='strength-item'>✓ {s}</div>", unsafe_allow_html=True)
+                    st.markdown(f"<div class='strength-item'>✓ {html.escape(str(s))}</div>", unsafe_allow_html=True)
             with col_neg:
                 st.markdown("##### Missing Points & Improvements:")
                 for imp in curr_eval.get("areas_to_improve", []):
-                    st.markdown(f"<div class='weakness-item'>• {imp}</div>", unsafe_allow_html=True)
+                    st.markdown(f"<div class='weakness-item'>• {html.escape(str(imp))}</div>", unsafe_allow_html=True)
 
             if curr_eval.get("ideal_answer"):
                 st.markdown(f"""

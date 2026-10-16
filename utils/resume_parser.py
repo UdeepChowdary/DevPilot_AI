@@ -99,14 +99,22 @@ def extract_text_from_txt(file_bytes: bytes) -> str:
     return file_bytes.decode("utf-8", errors="replace")
 
 
+MAX_RESUME_SIZE = 5 * 1024 * 1024  # 5 MB limit to protect against OOM / DoS
+
+
 def extract_text(uploaded_file) -> str:
     """
     Given a Streamlit UploadedFile, return extracted plain text.
-    Supports .pdf, .docx, and .txt files.
+    Supports .pdf, .docx, and .txt files. Enforces MAX_RESUME_SIZE guard.
     """
     if hasattr(uploaded_file, "seek"):
         uploaded_file.seek(0)
-    file_bytes = uploaded_file.read()
+    file_bytes = uploaded_file.read(MAX_RESUME_SIZE + 1)
+    if len(file_bytes) > MAX_RESUME_SIZE:
+        raise ValueError(
+            f"Uploaded file exceeds the maximum allowed size of {MAX_RESUME_SIZE // (1024 * 1024)} MB. "
+            "Please upload a standard 1-3 page resume."
+        )
     name = uploaded_file.name.lower()
 
     if name.endswith(".pdf"):

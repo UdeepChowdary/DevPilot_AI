@@ -29,6 +29,13 @@ def test_hf_availability():
     assert isinstance(avail, bool)
 
 
+def test_hf_pipeline_lock_exists():
+    """Verify thread-safe lock exists for Hugging Face pipeline caching."""
+    import threading
+    from utils.hf_models import _PIPELINE_LOCK
+    assert isinstance(_PIPELINE_LOCK, type(threading.Lock()))
+
+
 # ─── 2. Sub-App 1: Resume Bullet Enhancement Tests ────────────────────────────
 
 class TestResumeBulletEnhancement:

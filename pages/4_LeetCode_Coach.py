@@ -421,19 +421,25 @@ if st.session_state.get("lc_stats") and st.session_state.get("leetcode_audit"):
 
         for prob in roadmap:
             diff_pill = "pill-easy" if prob["difficulty"] == "Easy" else "pill-medium" if prob["difficulty"] == "Medium" else "pill-hard"
+            p_name = html.escape(str(prob.get("name") or ""))
+            raw_url = str(prob.get("url") or "#")
+            p_url = html.escape(raw_url) if raw_url.startswith(("http://", "https://", "#")) else "#"
+            p_pillar = html.escape(str(prob.get("pillar") or ""))
+            p_diff = html.escape(str(prob.get("difficulty") or ""))
+            p_pattern = html.escape(str(prob.get("pattern") or ""))
             st.markdown(f"""
 <div class="problem-card">
     <div style="display:flex; justify-content:space-between; align-items:flex-start; flex-wrap:wrap;">
         <div>
-            <a class="problem-title" href="{prob['url']}" target="_blank">{prob['name']} ↗</a>
-            <div style="color:#94a3b8; font-size:0.85rem; margin-top:0.3rem;">Pillar: <b>{prob['pillar']}</b></div>
+            <a class="problem-title" href="{p_url}" target="_blank" rel="noopener noreferrer">{p_name} ↗</a>
+            <div style="color:#94a3b8; font-size:0.85rem; margin-top:0.3rem;">Pillar: <b>{p_pillar}</b></div>
         </div>
         <div>
-            <span class="stat-pill {diff_pill}">{prob['difficulty']}</span>
+            <span class="stat-pill {diff_pill}">{p_diff}</span>
         </div>
     </div>
     <div style="margin-top:0.6rem; color:#cbd5e1; font-size:0.88rem; background:rgba(15,23,42,0.6); padding:0.6rem 0.8rem; border-radius:6px;">
-        💡 <b>Pattern Insight:</b> {prob['pattern']}
+        💡 <b>Pattern Insight:</b> {p_pattern}
     </div>
 </div>
 """, unsafe_allow_html=True)
@@ -491,19 +497,21 @@ if st.session_state.get("lc_stats") and st.session_state.get("leetcode_audit"):
                 with c_col2:
                     st.metric("Space Complexity", analysis["space_complexity"])
 
-                eng_badge = analysis.get("ai_engine", "Local Neural Engine")
+                eng_badge = html.escape(str(analysis.get("ai_engine", "Local Neural Engine")))
+                pattern_str = html.escape(str(analysis.get("detected_pattern", "")))
+                opt_tip = html.escape(str(analysis.get("optimization_tip", "")))
                 st.markdown(f"""
 <div class="complexity-card">
     <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:0.6rem; flex-wrap:wrap; gap:0.5rem;">
         <span style="font-size:1.1rem; font-weight:700; color:#f59e0b;">
-            Pattern: {analysis['detected_pattern']}
+            Pattern: {pattern_str}
         </span>
         <span style="font-size:0.75rem; background:rgba(99,102,241,0.18); border:1px solid rgba(99,102,241,0.4); color:#a5b4fc; padding:2px 8px; border-radius:12px; font-weight:600;">
             {eng_badge}
         </span>
     </div>
     <div style="color:#e2e8f0; font-size:0.92rem; line-height:1.6;">
-        <b>Optimization Strategy:</b> {analysis['optimization_tip']}
+        <b>Optimization Strategy:</b> {opt_tip}
     </div>
 </div>
 """, unsafe_allow_html=True)
