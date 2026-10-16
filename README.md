@@ -18,7 +18,8 @@
 
 [![Python](https://img.shields.io/badge/Python-3.10%2B-3776AB?style=for-the-badge&logo=python&logoColor=white)](https://www.python.org/)
 [![Streamlit](https://img.shields.io/badge/Streamlit-1.40%2B-FF4B4B?style=for-the-badge&logo=streamlit&logoColor=white)](https://streamlit.io/)
-[![Version](https://img.shields.io/badge/Version-3.1.1-6366F1?style=for-the-badge)](README.md)
+[![Version](https://img.shields.io/badge/Version-3.2.0-6366F1?style=for-the-badge)](README.md)
+[![Firebase](https://img.shields.io/badge/Firebase-Auth%20%26%20Firestore-FFCA28?style=for-the-badge&logo=firebase&logoColor=black)](https://firebase.google.com/)
 [![HuggingFace](https://img.shields.io/badge/HuggingFace-Transformers-FFD21E?style=for-the-badge&logo=huggingface&logoColor=black)](https://huggingface.co/)
 [![Google Gemini](https://img.shields.io/badge/Google%20Gemini-2.0%20Flash-8E75B2?style=for-the-badge&logo=google&logoColor=white)](https://ai.google.dev/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-F59E0B?style=for-the-badge)](LICENSE)
@@ -295,15 +296,22 @@ DevPilot_AI/
 │   ├── leetcode_coach.py       # LeetCode GraphQL fetcher, 8-pillar auditor & complexity engine
 │   ├── placement_tracker.py    # Unified ERS score, milestone planner & pipeline analytics
 │   ├── pdf_generator.py        # Professional PDF report exporter (fpdf2)
-│   ├── sidebar.py              # Shared sidebar navigation & session scorecards
-│   └── gemini_client.py        # Google Gemini API connector
+│   ├── sidebar.py              # Shared sidebar navigation, auth card & session scorecards
+│   ├── gemini_client.py        # Google Gemini API connector & BYOK manager
+│   ├── firebase_client.py      # Firebase Admin SDK & credentials initializer
+│   ├── firebase_auth.py        # Firebase Authentication REST client & session manager
+│   └── firebase_db.py          # Cloud Firestore CRUD & session state hydrator
 ├── tests/
 │   ├── test_ats_scorer.py      # ATS scoring unit & integration tests
+│   ├── test_byok_gemini.py     # Gemini BYOK & thread isolation tests
+│   ├── test_firebase_auth.py   # Firebase Auth endpoints & validation tests
+│   ├── test_firebase_db.py     # Firestore document CRUD & sync tests
 │   ├── test_github_scorer.py   # GitHub audit & portfolio scoring tests
+│   ├── test_hf_models.py       # Hugging Face neural pipelines & thread-safety tests
 │   ├── test_interview_coach.py # Mock interview question & rubric evaluation tests
 │   ├── test_leetcode_coach.py  # LeetCode auditor, radar, roadmap & complexity tests
 │   ├── test_placement_tracker.py # Placement readiness, milestone & pipeline tests
-│   └── test_resume_parser.py   # Text extraction & section parsing tests
+│   └── test_resume_parser.py   # Text extraction, file limits & section parsing tests
 └── LICENSE                     # MIT License
 ```
 
@@ -369,6 +377,8 @@ Open your browser at `http://localhost:8501`.
 - [x] **v3.0.1**: Patch Release — UI bug fixes in GitHub health audit & placement pipeline rendering, HTML sanitization, and configuration documentation
 - [x] **v3.1.0**: Hugging Face Local Neural Engine across all 5 modules (T5 bullet rewriter, neural elevator pitches, STAR interview scoring, AST code complexity analysis, neural career strategy) & complete design system refresh (JetBrains Mono / Sora typography, glassmorphism UI, unified tokens)
 - [x] **v3.1.1**: Universal Bring-Your-Own-Key (BYOK) for Google Gemini AI — enter API key once in the shared sidebar or any sub-app to instantly activate cloud AI analysis across all 5 modules with live status badges and memory-only encryption
+- [x] **v3.1.2**: Security hardening & sanitization patch — HTML escaping across untrusted GitHub/interview data, regex handle validation, 5MB upload guard, and thread-safe neural pipeline initialization
+- [x] **v3.2.0**: Firebase Cloud Authentication & Firestore Database Persistence — email/password authentication, cross-device session hydration, non-blocking background auto-sync across all 5 modules, and frictionless offline Guest Mode
 
 ---
 

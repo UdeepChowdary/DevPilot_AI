@@ -280,6 +280,13 @@ readiness = calculate_placement_readiness(
 )
 st.session_state["placement_readiness"] = readiness
 
+# Auto-sync to Firebase if user is authenticated
+try:
+    from utils.firebase_db import sync_module_to_cloud_async
+    sync_module_to_cloud_async("placement")
+except Exception:
+    pass
+
 # ─── Dashboard Tabs ───────────────────────────────────────────────────────────
 tab1, tab2, tab3, tab4, tab5 = st.tabs([
     "🏆 Unified Readiness & Radar",

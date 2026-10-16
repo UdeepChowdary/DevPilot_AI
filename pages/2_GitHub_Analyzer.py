@@ -287,6 +287,13 @@ if analyze_btn:
             # Also persist GitHub score in top-level session_state for sidebar KPI
             st.session_state["github_audit"] = audit_result
 
+            # Auto-sync to Firebase if user is authenticated
+            try:
+                from utils.firebase_db import sync_module_to_cloud_async
+                sync_module_to_cloud_async("github")
+            except Exception:
+                pass
+
             progress_bar.progress(100, text="Analysis complete!")
 
         except ValueError as ve:

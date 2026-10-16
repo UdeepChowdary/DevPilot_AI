@@ -334,6 +334,13 @@ else:
                 role=st.session_state.get("session_role", "Software Engineer"),
                 company_style=st.session_state.get("session_style", "General Tech"),
             )
+            # Auto-sync to Firebase if user is authenticated
+            try:
+                from utils.firebase_db import sync_module_to_cloud_async
+                sync_module_to_cloud_async("interview")
+            except Exception:
+                pass
+
 
         summary = st.session_state["interview_session"]
         score = summary["total_score"]

@@ -181,6 +181,12 @@ def render_sidebar() -> None:
 
         st.markdown("<div class='sidebar-gradient-divider'></div>", unsafe_allow_html=True)
 
+        # ── Firebase Authentication & Cloud Sync ──────────────────────
+        from utils.firebase_auth import render_auth_section
+        render_auth_section(widget_key="sidebar_auth")
+
+        st.markdown("<div class='sidebar-gradient-divider'></div>", unsafe_allow_html=True)
+
         # ── Gemini BYOK (Bring Your Own Key) ──────────────────────────
         from utils.gemini_client import get_active_gemini_key, render_byok_section
         active_key = get_active_gemini_key()
@@ -262,8 +268,9 @@ def render_sidebar() -> None:
         # ── Footer ────────────────────────────────────────────────────────
         st.markdown("""
 <div style="font-size:0.75rem; color:#475569; text-align:center; line-height:1.6;">
-    <span style="color:#818cf8; font-weight:600; font-family:'JetBrains Mono',monospace;">v3.1.1</span> • Built for software engineers<br>
+    <span style="color:#818cf8; font-weight:600; font-family:'JetBrains Mono',monospace;">v3.2.0</span> • Built for software engineers<br>
     <a href="https://github.com/UdeepChowdary/DevPilot_AI" target="_blank"
        style="color:#6366f1; text-decoration:none;">⭐ Star on GitHub</a>
 </div>
 """, unsafe_allow_html=True)
+

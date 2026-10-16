@@ -255,6 +255,14 @@ if fetch_btn:
                 st.session_state["lc_stats"] = stats
                 st.session_state["leetcode_audit"] = audit
                 st.session_state["lc_target_user"] = active_user
+
+                # Auto-sync to Firebase if user is authenticated
+                try:
+                    from utils.firebase_db import sync_module_to_cloud_async
+                    sync_module_to_cloud_async("leetcode")
+                except Exception:
+                    pass
+
                 st.success(f"Profile @{stats['username']} analyzed successfully!")
             except Exception as e:
                 st.error(f"Error fetching profile: {e}")

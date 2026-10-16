@@ -39,7 +39,11 @@ python-dotenv
 google-genai
 # google-generativeai  # uncomment as fallback if google-genai is unavailable
 
+# Firebase Authentication & Cloud Firestore Database
+firebase-admin>=6.4.0
+
 # ── Development / Testing ──────────────────────────────────────────────────────
 # Install with: pip install pytest pytest-mock
 pytest>=7.4.0
 pytest-mock>=3.12.0
+

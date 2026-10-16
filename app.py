@@ -336,7 +336,7 @@ st.markdown("<div class='gradient-divider'></div>", unsafe_allow_html=True)
 # ── Tech Stack ────────────────────────────────────────────────────────────────
 st.markdown("### Tech Stack & Architecture")
 stack = [
-    "Streamlit", "Python 3.10+", "PyMuPDF", "python-docx", "scikit-learn",
+    "Streamlit", "Python 3.10+", "Firebase (Auth & Firestore)", "PyMuPDF", "python-docx", "scikit-learn",
     "spaCy", "NLTK", "RAKE-NLTK", "Google Gemini AI", "HuggingFace Transformers",
     "Plotly Express",
 ]
@@ -345,6 +345,7 @@ st.markdown(chips, unsafe_allow_html=True)
 
 st.markdown("<br>", unsafe_allow_html=True)
 st.markdown(
-    "<p style='color:#64748b; font-size:0.85rem; text-align:center;'>DevPilot AI <span style='color:#818cf8; font-weight:600;'>v3.1.1</span> • Built for software engineering students</p>",
+    "<p style='color:#64748b; font-size:0.85rem; text-align:center;'>DevPilot AI <span style='color:#818cf8; font-weight:600;'>v3.2.0</span> • Built for software engineering students</p>",
     unsafe_allow_html=True,
 )
+

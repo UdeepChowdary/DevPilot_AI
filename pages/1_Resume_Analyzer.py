@@ -399,6 +399,14 @@ if analyze_clicked or "resume_results" in st.session_state:
                 "filename":    uploaded_file.name,
             }
 
+            # Auto-sync to Firebase if user is authenticated
+            try:
+                from utils.firebase_db import sync_module_to_cloud_async
+                sync_module_to_cloud_async("resume")
+            except Exception:
+                pass
+
+
         except Exception as e:
             progress_bar.empty()
             st.error(f"Analysis encountered an error: {e}")
