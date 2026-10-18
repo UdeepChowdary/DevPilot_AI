@@ -25,6 +25,7 @@ from utils.interview_coach import (
 from utils.pdf_generator import generate_interview_pdf
 from utils.sidebar import render_sidebar
 from utils.gemini_client import get_active_gemini_key, render_byok_section
+from utils.resume_parser import extract_text, MAX_RESUME_SIZE
 
 # ─── Page Config ──────────────────────────────────────────────────────────────
 st.set_page_config(
@@ -257,20 +258,40 @@ if not st.session_state["interview_active"]:
 
     with col_ctx:
         st.markdown("### 2. Candidate Context & Resume")
-        
-        # Check if resume was already parsed in Module 1
+
+        # ── Check if resume was already parsed in Module 1 ──
         cached_resume = st.session_state.get("resume_results") or {}
         cached_text = cached_resume.get("resume_text", "")
         cached_fname = cached_resume.get("filename", "Uploaded Resume")
         has_cached_resume = bool(cached_text)
 
-        if has_cached_resume and cached_text:
-            st.success(f"Loaded active resume: **{cached_fname}** ({len(cached_text.split())} words)")
-            use_cached = st.checkbox("Tailor questions to loaded resume profile", value=True)
+        resume_input = ""
+
+        if has_cached_resume:
+            st.success(f"✅ Resume loaded from Resume Analyzer: **{cached_fname}** ({len(cached_text.split())} words)")
+            use_cached = st.checkbox("Use this resume to tailor questions", value=True)
             resume_input = cached_text if use_cached else ""
+            st.markdown("**Or upload a different resume below:**")
         else:
-            resume_input = ""
-            st.info("Tip: Upload your resume in the **Resume Analyzer** first to automatically customize interview questions to your projects!")
+            st.info("📄 Upload your resume below to tailor interview questions to your experience.")
+
+        # ── Direct resume upload ──
+        uploaded_resume = st.file_uploader(
+            "Upload Resume (PDF, DOCX, or TXT)",
+            type=["pdf", "docx", "txt"],
+            key="mock_interview_resume_upload",
+            help="Your resume will be parsed and used to generate personalised questions.",
+        )
+        if uploaded_resume is not None:
+            try:
+                parsed_text = extract_text(uploaded_resume)
+                if parsed_text.strip():
+                    resume_input = parsed_text
+                    st.success(f"✅ Resume parsed: **{uploaded_resume.name}** ({len(parsed_text.split())} words extracted)")
+                else:
+                    st.warning("Could not extract text from the uploaded file. Try a different format.")
+            except Exception as parse_err:
+                st.error(f"Resume parse error: {parse_err}")
 
         custom_context = st.text_area(
             "Or paste key skills, technologies, or past projects:",
