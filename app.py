@@ -345,7 +345,7 @@ st.markdown(chips, unsafe_allow_html=True)
 
 st.markdown("<br>", unsafe_allow_html=True)
 st.markdown(
-    "<p style='color:#64748b; font-size:0.85rem; text-align:center;'>DevPilot AI <span style='color:#818cf8; font-weight:600;'>v3.2.0</span> • Built for software engineering students</p>",
+    "<p style='color:#64748b; font-size:0.85rem; text-align:center;'>DevPilot AI <span style='color:#818cf8; font-weight:600;'>v3.2.2</span> • Built for software engineering students</p>",
     unsafe_allow_html=True,
 )
 

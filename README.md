@@ -18,7 +18,7 @@
 
 [![Python](https://img.shields.io/badge/Python-3.10%2B-3776AB?style=for-the-badge&logo=python&logoColor=white)](https://www.python.org/)
 [![Streamlit](https://img.shields.io/badge/Streamlit-1.40%2B-FF4B4B?style=for-the-badge&logo=streamlit&logoColor=white)](https://streamlit.io/)
-[![Version](https://img.shields.io/badge/Version-3.2.0-6366F1?style=for-the-badge)](README.md)
+[![Version](https://img.shields.io/badge/Version-3.2.2-6366F1?style=for-the-badge)](README.md)
 [![Firebase](https://img.shields.io/badge/Firebase-Auth%20%26%20Firestore-FFCA28?style=for-the-badge&logo=firebase&logoColor=black)](https://firebase.google.com/)
 [![HuggingFace](https://img.shields.io/badge/HuggingFace-Transformers-FFD21E?style=for-the-badge&logo=huggingface&logoColor=black)](https://huggingface.co/)
 [![Google Gemini](https://img.shields.io/badge/Google%20Gemini-2.0%20Flash-8E75B2?style=for-the-badge&logo=google&logoColor=white)](https://ai.google.dev/)
@@ -277,6 +277,8 @@ DevPilot_AI/
 ├── app.py                      # Main landing page & module dashboard
 ├── requirements.txt            # Python dependencies
 ├── .env.example                # Example environment configuration
+├── .dockerignore               # Container deployment exclusion rules
+├── .gitleaks.toml              # Gitleaks secret scanning allowlist configuration
 ├── pages/
 │   ├── 1_Resume_Analyzer.py    # Resume Analyzer UI & interactive workflows
 │   ├── 2_GitHub_Analyzer.py    # GitHub Profile Analyzer & Recruiter Auditor
@@ -354,12 +356,30 @@ cp .env.example .env
 ```
 Configure your keys inside `.env`:
 ```env
+# Google Gemini API Key (Optional — enables cloud AI rewrites & multi-modal interview analysis)
 GEMINI_API_KEY=your_gemini_api_key_here
+
+# GitHub Personal Access Token (Optional — increases API rate limit from 60 to 5,000 req/hr)
 GITHUB_TOKEN=your_optional_github_token_here
+
+# Firebase Configuration (Optional — enables cloud multi-device session sync & persistence)
+FIREBASE_WEB_API_KEY=your_firebase_web_api_key_here
+FIREBASE_PROJECT_ID=your_firebase_project_id_here
+FIREBASE_SERVICE_ACCOUNT_PATH=serviceAccountKey.json
+
+# Production HMAC Session Signing Secret (Required for tamper-proof session persistence in production)
+SECRET_KEY=replace-with-random-32-byte-hex-secret
 ```
 *(Note: DevPilot AI can run 100% offline without an API key using built-in rule-based and local NLP heuristics.)*
 
-### 4. Launch the Dashboard
+### 4. Running Tests
+Run the automated test suite with pytest:
+```bash
+pytest
+```
+*(Executes 218 unit & integration tests validating ATS scoring, BYOK isolation, Firebase auth/DB, GitHub auditor, neural engines, LeetCode coach, and resume parsing.)*
+
+### 5. Launch the Dashboard
 ```bash
 streamlit run app.py
 ```
@@ -379,6 +399,8 @@ Open your browser at `http://localhost:8501`.
 - [x] **v3.1.1**: Universal Bring-Your-Own-Key (BYOK) for Google Gemini AI — enter API key once in the shared sidebar or any sub-app to instantly activate cloud AI analysis across all 5 modules with live status badges and memory-only encryption
 - [x] **v3.1.2**: Security hardening & sanitization patch — HTML escaping across untrusted GitHub/interview data, regex handle validation, 5MB upload guard, and thread-safe neural pipeline initialization
 - [x] **v3.2.0**: Firebase Cloud Authentication & Firestore Database Persistence — email/password authentication, cross-device session hydration, non-blocking background auto-sync across all 5 modules, and frictionless offline Guest Mode
+- [x] **v3.2.1**: Persistent Multi-User Authentication — HMAC session signing token persistence across page reloads and browser navigation, safe cache fallback, and cloud state hydration
+- [x] **v3.2.2**: Security Hardening & XSS Sanitization — BYOK API key memory isolation in `st.session_state`, Firestore document path validation and explicit network timeouts, upload DoS defenses (10 MB size, 30-page PDF, 1500-paragraph DOCX limits), regex handle validation for GitHub and LeetCode, comprehensive HTML escaping across all UI templates, and `.dockerignore` container hygiene
 
 ---
 
