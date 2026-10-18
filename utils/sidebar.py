@@ -284,7 +284,7 @@ def render_sidebar() -> None:
         # ── Footer ────────────────────────────────────────────────────────
         st.markdown("""
 <div style="font-size:0.75rem; color:#475569; text-align:center; line-height:1.6;">
-    <span style="color:#818cf8; font-weight:600; font-family:'JetBrains Mono',monospace;">v3.2.0</span> • Built for software engineers<br>
+    <span style="color:#818cf8; font-weight:600; font-family:'JetBrains Mono',monospace;">v3.2.2</span> • Built for software engineers<br>
     <a href="https://github.com/UdeepChowdary/DevPilot_AI" target="_blank"
        style="color:#6366f1; text-decoration:none;">⭐ Star on GitHub</a>
 </div>
