@@ -34,9 +34,13 @@ def test_explicit_api_key_takes_priority():
 
 
 def test_env_api_key_fallback():
-    os.environ["GEMINI_API_KEY"] = "env-key-12345"
-    res = get_active_gemini_key()
-    assert res == "env-key-12345"
+    mock_st = MagicMock()
+    mock_st.session_state = {}
+    mock_st.secrets = {}
+    with patch.dict("sys.modules", {"streamlit": mock_st}):
+        os.environ["GEMINI_API_KEY"] = "env-key-12345"
+        res = get_active_gemini_key()
+        assert res == "env-key-12345"
 
 
 def test_session_state_takes_priority_over_env():

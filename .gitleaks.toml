@@ -1,0 +1,15 @@
+title = "Gitleaks Configuration for DevPilot_AI"
+
+[extend]
+useDefault = true
+
+[allowlist]
+description = "Ignore dummy API keys used in unit tests"
+paths = [
+  '''tests/test_code_reviewer\.py'''
+]
+fingerprints = [
+  "4f58ba0f6ca46b6b29cd0ffeee1abcf61ff13cfe:tests/test_code_reviewer.py:generic-api-key:99",
+  "4f58ba0f6ca46b6b29cd0ffeee1abcf61ff13cfe:tests/test_code_reviewer.py:generic-api-key:146",
+  "4f58ba0f6ca46b6b29cd0ffeee1abcf61ff13cfe:tests/test_code_reviewer.py:generic-api-key:228"
+]

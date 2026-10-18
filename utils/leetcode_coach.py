@@ -116,15 +116,29 @@ _session = _build_session()
 
 # ─── 1. LeetCode Public Data Fetcher ─────────────────────────────────────────
 
+LEETCODE_USERNAME_REGEX = re.compile(r"^[a-zA-Z0-9](?:[a-zA-Z0-9]|[-_](?=[a-zA-Z0-9])){0,38}$")
+
+
+def validate_leetcode_username(username: str) -> str:
+    """Validate that the LeetCode handle is well-formed, safe, and free of injection patterns."""
+    clean = (username or "").strip()
+    if not clean:
+        raise ValueError("LeetCode username cannot be empty.")
+    if "/" in clean or "\\" in clean or ".." in clean or not LEETCODE_USERNAME_REGEX.match(clean):
+        raise ValueError(
+            "Invalid LeetCode username. Username must contain only alphanumeric characters, "
+            "underscores, or single hyphens, and be at most 39 characters."
+        )
+    return clean
+
+
 def fetch_leetcode_stats(username: str) -> Dict[str, Any]:
     """
     Fetch public LeetCode statistics via LeetCode's public GraphQL endpoint.
     Retrieves solved counts by difficulty and problems solved across topic tags.
     Returns structured dict or raises ValueError with user-friendly diagnostics.
     """
-    clean_user = username.strip()
-    if not clean_user:
-        raise ValueError("LeetCode username cannot be empty.")
+    clean_user = validate_leetcode_username(username)
 
     query = """
     query getUserData($username: String!) {

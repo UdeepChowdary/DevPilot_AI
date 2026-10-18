@@ -37,3 +37,14 @@ Thumbs.db
 # SQLite Databases & temporary files
 *.sqlite3
 *.db
+*.tmp
+*.temp
+
+# Test coverage & logs
+*.log
+.coverage
+htmlcov/
+
+# Generated local export reports
+DevPilot_*.pdf
+DevPilot_*.md

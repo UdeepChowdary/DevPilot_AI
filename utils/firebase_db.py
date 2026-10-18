@@ -10,6 +10,7 @@ Manages persistent user data across all 5 DevPilot AI modules in Cloud Firestore
 Supports non-blocking background auto-saving and full session state hydration upon login.
 """
 
+import re
 import logging
 import threading
 from typing import Optional, Dict, Any
@@ -19,6 +20,27 @@ from utils.firebase_client import get_firestore_client, is_firestore_configured
 from utils.firebase_auth import get_current_user
 
 logger = logging.getLogger(__name__)
+
+_UID_PATTERN = re.compile(r"^[a-zA-Z0-9_\-\.]{1,128}$")
+_MODULE_PATTERN = re.compile(r"^[a-zA-Z0-9_\-]{1,64}$")
+
+
+def _validate_uid(uid: Any) -> bool:
+    """Validate that uid is a safe identifier without path traversal or injection characters."""
+    if not uid or not isinstance(uid, str):
+        return False
+    if "/" in uid or "\\" in uid or ".." in uid or "\0" in uid:
+        return False
+    return bool(_UID_PATTERN.match(uid))
+
+
+def _validate_module_name(module_name: Any) -> bool:
+    """Validate that module_name is a known, safe alphanumeric identifier."""
+    if not module_name or not isinstance(module_name, str):
+        return False
+    if "/" in module_name or "\\" in module_name or ".." in module_name or "\0" in module_name:
+        return False
+    return bool(_MODULE_PATTERN.match(module_name))
 
 
 def _sanitize_data_for_firestore(obj: Any) -> Any:
@@ -43,7 +65,8 @@ def save_module_data(uid: str, module_name: str, data: Dict[str, Any]) -> bool:
     Persist module data to Firestore at users/{uid}/modules/{module_name}.
     Returns True on success, False on failure.
     """
-    if not uid or not module_name:
+    if not _validate_uid(uid) or not _validate_module_name(module_name):
+        logger.warning("Invalid uid or module_name rejected for Firestore write: uid=%r, module=%r", uid, module_name)
         return False
 
     client = get_firestore_client()
@@ -56,7 +79,7 @@ def save_module_data(uid: str, module_name: str, data: Dict[str, Any]) -> bool:
         clean_data["updated_at"] = datetime.now(timezone.utc)
 
         doc_ref = client.collection("users").document(uid).collection("modules").document(module_name)
-        doc_ref.set(clean_data, merge=True)
+        doc_ref.set(clean_data, merge=True, timeout=10)
         logger.info("Successfully synced module '%s' for user '%s' to Firestore.", module_name, uid)
         return True
     except Exception as e:
@@ -69,7 +92,8 @@ def load_module_data(uid: str, module_name: str) -> Optional[Dict[str, Any]]:
     Retrieve module data from Firestore at users/{uid}/modules/{module_name}.
     Returns document dictionary or None if not found or on error.
     """
-    if not uid or not module_name:
+    if not _validate_uid(uid) or not _validate_module_name(module_name):
+        logger.warning("Invalid uid or module_name rejected for Firestore read: uid=%r, module=%r", uid, module_name)
         return None
 
     client = get_firestore_client()
@@ -78,7 +102,7 @@ def load_module_data(uid: str, module_name: str) -> Optional[Dict[str, Any]]:
 
     try:
         doc_ref = client.collection("users").document(uid).collection("modules").document(module_name)
-        doc = doc_ref.get()
+        doc = doc_ref.get(timeout=10)
         if doc.exists:
             return doc.to_dict()
         return None
@@ -92,7 +116,8 @@ def load_all_user_data(uid: str) -> Dict[str, Any]:
     Fetch all module documents for a user from Firestore.
     Returns a dict mapping module_name -> document data.
     """
-    if not uid:
+    if not _validate_uid(uid):
+        logger.warning("Invalid uid rejected for Firestore read all: uid=%r", uid)
         return {}
 
     client = get_firestore_client()
@@ -102,7 +127,7 @@ def load_all_user_data(uid: str) -> Dict[str, Any]:
     all_data = {}
     try:
         modules_ref = client.collection("users").document(uid).collection("modules")
-        docs = modules_ref.stream()
+        docs = modules_ref.stream(timeout=10)
         for doc in docs:
             all_data[doc.id] = doc.to_dict()
         return all_data
@@ -178,7 +203,7 @@ def hydrate_session_from_cloud(uid: str) -> bool:
     """
     import streamlit as st
 
-    if not uid:
+    if not _validate_uid(uid):
         return False
 
     all_modules = load_all_user_data(uid)

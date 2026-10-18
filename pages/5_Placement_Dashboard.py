@@ -210,9 +210,9 @@ with st.container():
 # Target Date Countdown Calculation
 days_left = (st.session_state["target_placement_date"] - date.today()).days
 countdown_msg = (
-    f"⏳ **{days_left} Days Remaining** until your target placement date ({st.session_state['target_placement_date'].strftime('%B %d, %Y')})"
+    f"⏳ <b>{days_left} Days Remaining</b> until your target placement date ({html.escape(st.session_state['target_placement_date'].strftime('%B %d, %Y'))})"
     if days_left > 0
-    else f"🎯 **Placement Season Active!** ({abs(days_left)} days past target date)"
+    else f"🎯 <b>Placement Season Active!</b> ({abs(days_left)} days past target date)"
 )
 st.markdown(f"""
 <div class="countdown-box">
@@ -307,6 +307,9 @@ with tab1:
         grade = readiness["grade"]
         badge_color = readiness["tier_badge_color"]
 
+        grade_label_esc = html.escape(str(readiness.get('grade_label', '')))
+        outlook_esc = html.escape(str(readiness.get('outlook', '')))
+        tier_verdict_esc = html.escape(str(readiness.get('tier_verdict', '')))
         st.markdown(f"""
 <div class="kpi-card" style="border-top: 4px solid {badge_color};">
     <div class="kpi-title">Engineering Readiness Score (ERS)</div>
@@ -317,10 +320,10 @@ with tab1:
             Grade {grade}
         </span>
     </div>
-    <div style="font-weight:700; color:#f0f6fc; margin-top:0.4rem;">{readiness['grade_label']}</div>
-    <div class="kpi-sub" style="margin-top:0.5rem; line-height:1.5;">{readiness['outlook']}</div>
+    <div style="font-weight:700; color:#f0f6fc; margin-top:0.4rem;">{grade_label_esc}</div>
+    <div class="kpi-sub" style="margin-top:0.5rem; line-height:1.5;">{outlook_esc}</div>
     <div style="margin-top:1rem; padding:0.6rem 0.8rem; background:rgba(255,255,255,0.03); border-radius:8px; border:1px solid #30363d;">
-        <span style="font-size:0.85rem; font-weight:700; color:{badge_color};">{readiness['tier_verdict']}</span>
+        <span style="font-size:0.85rem; font-weight:700; color:{badge_color};">{tier_verdict_esc}</span>
     </div>
 </div>
 """, unsafe_allow_html=True)
@@ -330,10 +333,13 @@ with tab1:
         for p_id, p in readiness["pillars"].items():
             p_score = p["score"]
             tested_tag = "Live Tested" if p["tested"] else "Baseline"
+            p_name_esc = html.escape(str(p.get('name', '')))
+            p_icon_esc = html.escape(str(p.get('icon', '')))
+            p_status_esc = html.escape(str(p.get('status', '')))
             st.markdown(f"""
 <div class="pillar-card">
     <div style="display:flex; justify-content:space-between; align-items:center;">
-        <span style="font-weight:700; color:#f0f6fc; font-size:0.95rem;">{p['icon']} {p['name']}</span>
+        <span style="font-weight:700; color:#f0f6fc; font-size:0.95rem;">{p_icon_esc} {p_name_esc}</span>
         <span style="font-weight:800; color:{p['color']}; font-size:1.1rem;">{p_score}/100</span>
     </div>
     <div style="margin: 0.5rem 0;">
@@ -342,7 +348,7 @@ with tab1:
         </div>
     </div>
     <div style="display:flex; justify-content:space-between; font-size:0.75rem; color:#8b949e;">
-        <span>Target: {p['benchmark']} | Status: <b style="color:{p['color']};">{p['status']}</b></span>
+        <span>Target: {p['benchmark']} | Status: <b style="color:{p['color']};">{p_status_esc}</b></span>
         <span>{tested_tag}</span>
     </div>
 </div>
@@ -709,7 +715,7 @@ with tab4:
                     f'<span style="color:#94a3b8; font-size:0.9rem;"> — {role_str}</span>'
                     f'<span style="font-family:\'JetBrains Mono\', monospace; margin-left:0.6rem; font-size:0.72rem; background:rgba(255,255,255,0.06); border:1px solid rgba(255,255,255,0.12); padding:0.15rem 0.5rem; border-radius:12px; color:#cbd5e1;">{tier_str}</span>'
                     f'</div>'
-                    f'<span style="font-family:\'JetBrains Mono\', monospace; background:{s_color}22; color:{s_color}; border:1px solid {s_color}55; padding:0.2rem 0.7rem; border-radius:12px; font-weight:700; font-size:0.78rem;">{stage}</span>'
+                    f'<span style="font-family:\'JetBrains Mono\', monospace; background:{s_color}22; color:{s_color}; border:1px solid {s_color}55; padding:0.2rem 0.7rem; border-radius:12px; font-weight:700; font-size:0.78rem;">{html.escape(str(stage))}</span>'
                     f'</div>'
                     f'<div style="display:flex; gap:16px; font-size:0.8rem; color:#94a3b8; margin-top:0.5rem;">'
                     f'<span>📅 Applied: {date_str}</span>'

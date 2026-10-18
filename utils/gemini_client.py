@@ -2,6 +2,7 @@ import os
 import re
 import json
 import logging
+import html
 from typing import Optional, Any
 from dotenv import load_dotenv
 
@@ -20,7 +21,9 @@ def get_active_gemini_key(api_key: Optional[str] = None) -> str:
             import streamlit as st
             key = (st.session_state.get("gemini_api_key") or "").strip()
             if not key and hasattr(st, "secrets") and "GEMINI_API_KEY" in st.secrets:
-                key = str(st.secrets["GEMINI_API_KEY"]).strip()
+                val = str(st.secrets["GEMINI_API_KEY"]).strip()
+                if val:
+                    key = val
         except Exception:
             pass
     if not key:
@@ -54,8 +57,8 @@ def clear_active_gemini_key() -> None:
 def render_byok_section(widget_key: str = "byok_gemini", compact: bool = False, title: Optional[str] = None) -> str:
     """
     Renders an interactive 'Bring Your Own Key' UI widget for Gemini API.
-    Saves the key to st.session_state["gemini_api_key"] and os.environ["GEMINI_API_KEY"]
-    so that it immediately becomes active across all sub-apps in the current session.
+    Saves the key strictly to st.session_state["gemini_api_key"] for the active session,
+    ensuring it is never written to os.environ or cached to disk.
     Returns the active API key string.
     """
     import streamlit as st
@@ -63,7 +66,7 @@ def render_byok_section(widget_key: str = "byok_gemini", compact: bool = False, 
     active_key = get_active_gemini_key()
 
     if active_key:
-        masked = active_key[:6] + "..." + active_key[-4:] if len(active_key) > 10 else "***"
+        masked = html.escape(active_key[:6] + "..." + active_key[-4:] if len(active_key) > 10 else "***")
         if compact:
             st.markdown(
                 f"""
@@ -142,7 +145,7 @@ def render_byok_section(widget_key: str = "byok_gemini", compact: bool = False, 
         return active_key
 
     # When no key is active:
-    section_title = title or "🔑 Bring Your Own Key (BYOK) — Google Gemini AI"
+    section_title = html.escape(title or "🔑 Bring Your Own Key (BYOK) — Google Gemini AI")
     st.markdown(
         f"""
 <div style="background: rgba(99, 102, 241, 0.07); border: 1px dashed rgba(99, 102, 241, 0.4); border-radius: 10px; padding: 0.85rem 1rem; margin: 0.5rem 0;">
@@ -232,7 +235,12 @@ def ask(prompt: str, api_key: Optional[str] = None) -> Optional[str]:
     except ValueError:
         raise
     except Exception as e:
-        logger.error("Gemini API call failed: %s", e)
+        err_msg = str(e)
+        key_str = get_active_gemini_key(api_key)
+        if key_str:
+            err_msg = err_msg.replace(key_str, "[REDACTED_API_KEY]")
+        err_msg = re.sub(r"key=[A-Za-z0-9_\-]+", "key=[REDACTED]", err_msg)
+        logger.error("Gemini API call failed: %s", err_msg)
         return None
 
 
@@ -261,5 +269,5 @@ def ask_json(prompt: str, api_key: Optional[str] = None) -> Any:
     try:
         return json.loads(cleaned)
     except json.JSONDecodeError as e:
-        logger.error("Failed to parse Gemini JSON response: %s", e)
+        logger.error("Failed to parse Gemini JSON response: %s", type(e).__name__)
         return None

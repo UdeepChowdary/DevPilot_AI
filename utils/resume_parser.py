@@ -49,15 +49,30 @@ SECTION_PATTERNS = {
 }
 
 
+MAX_RESUME_SIZE = 10 * 1024 * 1024  # 10 MB limit to protect against OOM / DoS
+MAX_PDF_PAGES = 30  # Max 30 pages limit to protect against PDF-based DoS
+MAX_DOCX_PARAGRAPHS = 1500  # Max paragraphs to protect against DOCX XML bombs
+
+
 def extract_text_from_pdf(file_bytes: bytes) -> str:
     """
     Extract raw text from PDF bytes using PyMuPDF.
     Sorts blocks topologically (top-to-bottom, left-to-right) for multi-column resumes.
+    Enforces MAX_RESUME_SIZE and MAX_PDF_PAGES limits.
     """
+    if len(file_bytes) > MAX_RESUME_SIZE:
+        raise ValueError(
+            f"Uploaded file exceeds the maximum allowed size of {MAX_RESUME_SIZE // (1024 * 1024)} MB. "
+            "Please upload a standard 1-3 page resume."
+        )
     doc = fitz.open(stream=file_bytes, filetype="pdf")
-    if len(doc) > 15:
+    if len(doc) > MAX_PDF_PAGES:
+        page_count = len(doc)
         doc.close()
-        raise ValueError("Resume exceeds maximum limit of 15 pages. Please upload a standard 1-3 page resume.")
+        raise ValueError(
+            f"Resume exceeds maximum limit of {MAX_PDF_PAGES} pages ({page_count} pages detected). "
+            "Please upload a standard 1-3 page resume."
+        )
     pages_text = []
     for page in doc:
         blocks = page.get_text("blocks", sort=True)
@@ -73,10 +88,20 @@ def extract_text_from_pdf(file_bytes: bytes) -> str:
 
 def extract_text_from_docx(file_bytes: bytes) -> str:
     """Extract text from Word .docx file bytes including tables."""
+    if len(file_bytes) > MAX_RESUME_SIZE:
+        raise ValueError(
+            f"Uploaded file exceeds the maximum allowed size of {MAX_RESUME_SIZE // (1024 * 1024)} MB. "
+            "Please upload a standard 1-3 page resume."
+        )
     if not DOCX_AVAILABLE:
         raise ImportError("python-docx is not installed. Please install it to parse .docx files.")
 
     doc = docx.Document(io.BytesIO(file_bytes))
+    if len(doc.paragraphs) > MAX_DOCX_PARAGRAPHS:
+        raise ValueError(
+            f"Document exceeds maximum paragraph limit of {MAX_DOCX_PARAGRAPHS}. "
+            "Please upload a standard 1-3 page resume."
+        )
     paragraphs = [p.text for p in doc.paragraphs if p.text.strip()]
 
     # Also extract any table content
@@ -91,15 +116,17 @@ def extract_text_from_docx(file_bytes: bytes) -> str:
 
 def extract_text_from_txt(file_bytes: bytes) -> str:
     """Decode plain text file bytes with encoding fallbacks."""
+    if len(file_bytes) > MAX_RESUME_SIZE:
+        raise ValueError(
+            f"Uploaded file exceeds the maximum allowed size of {MAX_RESUME_SIZE // (1024 * 1024)} MB. "
+            "Please upload a standard 1-3 page resume."
+        )
     for encoding in ("utf-8", "latin-1", "utf-16", "cp1252"):
         try:
             return file_bytes.decode(encoding)
         except (UnicodeDecodeError, LookupError):
             continue
     return file_bytes.decode("utf-8", errors="replace")
-
-
-MAX_RESUME_SIZE = 5 * 1024 * 1024  # 5 MB limit to protect against OOM / DoS
 
 
 def extract_text(uploaded_file) -> str:

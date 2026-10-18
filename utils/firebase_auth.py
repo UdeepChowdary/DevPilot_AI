@@ -13,6 +13,8 @@ import hmac
 import hashlib
 import json
 import base64
+import html
+import secrets
 from typing import Optional, Dict, Any, Tuple
 from utils.firebase_client import get_firebase_web_api_key, is_firebase_auth_configured
 
@@ -22,6 +24,9 @@ SESSION_QUERY_PARAM = "auth_session"
 
 FIREBASE_AUTH_BASE = "https://identitytoolkit.googleapis.com/v1"
 FIREBASE_TOKEN_BASE = "https://securetoken.googleapis.com/v1"
+
+# Per-process cryptographic fallback key so unconfigured cloud deployments cannot be forged
+_RUNTIME_FALLBACK_KEY = secrets.token_hex(32)
 
 # Friendly error messages for Firebase Auth error codes
 AUTH_ERROR_MESSAGES = {
@@ -164,17 +169,54 @@ SESSION_CACHE_FILE = os.path.join(os.path.dirname(os.path.dirname(__file__)), ".
 USER_SESSION_CACHE_FILE = os.path.join(os.path.expanduser("~"), ".devpilot_session.json")
 
 
+def _is_cloud_environment() -> bool:
+    """Detect if running on Streamlit Cloud, Render, Hugging Face Spaces, or multi-user container."""
+    return bool(
+        os.getenv("STREAMLIT_SHARING_MODE")
+        or os.getenv("RENDER")
+        or os.getenv("SPACE_ID")
+        or os.getenv("DYNO")
+        or os.getenv("DEVPILOT_CLOUD")
+        or os.path.exists("/mount/src")
+    )
+
+
 def get_session_cache_files() -> Tuple[str, ...]:
-    """Return all session cache file locations (project root and user home)."""
+    """
+    Return session cache file locations ONLY in single-user local desktop environments.
+    In cloud/multi-user deployments, never read/write shared filesystem session files.
+    """
+    if _is_cloud_environment():
+        return ()
     return (SESSION_CACHE_FILE, USER_SESSION_CACHE_FILE)
 
 
 def _get_auth_signing_key() -> str:
-    """Retrieve secret key for signing session tokens."""
-    return get_firebase_web_api_key() or os.getenv("SECRET_KEY", "devpilot-ai-default-auth-salt")
+    """
+    Retrieve a private secret key for signing session tokens.
+    Prioritizes explicit SECRET_KEY over public Firebase Web API key.
+    """
+    secret = os.getenv("SECRET_KEY", "").strip()
+    if secret:
+        return secret
+
+    try:
+        import streamlit as st
+        if hasattr(st, "secrets") and "SECRET_KEY" in st.secrets:
+            return str(st.secrets["SECRET_KEY"]).strip()
+    except Exception:
+        pass
+
+    api_key = get_firebase_web_api_key() or ""
+    if not _is_cloud_environment() and api_key:
+        # Deterministic machine-bound key for local desktop convenience across restarts
+        local_seed = f"{os.path.expanduser('~')}:{api_key}:devpilot-local-hmac"
+        return hashlib.sha256(local_seed.encode("utf-8")).hexdigest()
+
+    return f"{api_key}:{_RUNTIME_FALLBACK_KEY}"
 
 
-def generate_session_token(uid: str, email: str, expiry_days: int = 30) -> str:
+def generate_session_token(uid: str, email: str, expiry_days: int = 7) -> str:
     """Generate a tamper-proof HMAC-signed session token for persistent browser sessions."""
     payload = {
         "uid": uid,
@@ -205,17 +247,21 @@ def verify_session_token(token: str) -> Optional[Dict[str, Any]]:
         payload = json.loads(payload_bytes.decode('utf-8'))
         if time.time() > payload.get("exp", 0):
             return None
+        uid = str(payload.get("uid", "")).strip()
+        email = str(payload.get("email", "")).strip()
+        if not uid:
+            return None
         return {
-            "uid": payload["uid"],
-            "email": payload["email"],
-            "display_name": payload.get("email", "").split("@")[0],
+            "uid": uid,
+            "email": email,
+            "display_name": email.split("@")[0] if email else "Candidate",
         }
     except Exception:
         return None
 
 
 def persist_user_session(user_data: Dict[str, Any]) -> None:
-    """Persist user session token into Streamlit query params and local cache files so reload (F5) doesn't sign out."""
+    """Persist user session token into Streamlit query params and (if local) cache files so reload (F5) doesn't sign out."""
     if not user_data or not user_data.get("uid"):
         return
     token = generate_session_token(user_data["uid"], user_data.get("email", ""))
@@ -225,7 +271,7 @@ def persist_user_session(user_data: Dict[str, Any]) -> None:
         st.query_params[SESSION_QUERY_PARAM] = token
     except Exception:
         pass
-    # 2. Local session cache files (project root and user home fallback)
+    # 2. Local session cache files (only returned when running locally)
     cache_payload = {"token": token, "email": user_data.get("email"), "uid": user_data["uid"]}
     for cache_path in get_session_cache_files():
         try:
@@ -243,7 +289,7 @@ def clear_persisted_session() -> None:
             del st.query_params[SESSION_QUERY_PARAM]
     except Exception:
         pass
-    for cache_path in get_session_cache_files():
+    for cache_path in (SESSION_CACHE_FILE, USER_SESSION_CACHE_FILE):
         try:
             if os.path.exists(cache_path):
                 os.remove(cache_path)
@@ -254,7 +300,7 @@ def clear_persisted_session() -> None:
 def init_auth() -> Optional[Dict[str, Any]]:
     """
     Initialize and recover authenticated user session.
-    Checks st.session_state first, then st.query_params, then local cache files.
+    Checks st.session_state first, then st.query_params, then local cache files (if local desktop).
     If recovered, auto-hydrates data from Firestore.
     """
     import streamlit as st
@@ -276,7 +322,7 @@ def init_auth() -> Optional[Dict[str, Any]]:
     except Exception:
         pass
 
-    # 2. Check local file caches if query_params was empty (e.g. page navigation stripped it)
+    # 2. Check local file caches if query_params was empty (only active on local desktop)
     if not token:
         for cache_path in get_session_cache_files():
             if os.path.exists(cache_path):
@@ -362,8 +408,9 @@ def render_auth_section(widget_key: str = "sidebar_auth") -> None:
     auth_available = is_firebase_auth_configured()
 
     if current_user:
-        email = current_user.get("email", "Candidate")
-        masked_email = email if len(email) <= 24 else email[:21] + "..."
+        email = str(current_user.get("email", "Candidate"))
+        raw_masked = email if len(email) <= 24 else email[:21] + "..."
+        masked_email = html.escape(raw_masked)
         st.markdown(f"""
 <div style="background: rgba(34, 197, 94, 0.08); border: 1px solid rgba(34, 197, 94, 0.3); border-radius: 10px; padding: 0.65rem 0.85rem; margin-bottom: 0.5rem;">
     <div style="font-size: 0.78rem; color: #4ade80; font-weight: 700;">
@@ -445,4 +492,3 @@ def render_auth_section(widget_key: str = "sidebar_auth") -> None:
                         st.error(msg)
                 else:
                     st.warning("Please enter your account email.")
-

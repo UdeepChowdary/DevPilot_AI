@@ -62,6 +62,7 @@ def _get_headers(token: Optional[str] = None) -> Dict[str, str]:
 
 
 GITHUB_USERNAME_REGEX = re.compile(r"^[a-zA-Z0-9](?:[a-zA-Z0-9]|-(?=[a-zA-Z0-9])){0,38}$")
+GITHUB_REPO_REGEX = re.compile(r"^[a-zA-Z0-9_\-\.]{1,100}$")
 
 
 def validate_github_username(username: str) -> str:
@@ -69,11 +70,21 @@ def validate_github_username(username: str) -> str:
     clean = (username or "").strip()
     if not clean:
         raise ValueError("GitHub username cannot be empty.")
-    if not GITHUB_USERNAME_REGEX.match(clean):
+    if "/" in clean or "\\" in clean or ".." in clean or not GITHUB_USERNAME_REGEX.match(clean):
         raise ValueError(
             "Invalid GitHub username. Username must contain only alphanumeric characters and single hyphens, "
             "cannot start or end with a hyphen, and must be at most 39 characters."
         )
+    return clean
+
+
+def validate_repo_name(repo_name: str) -> str:
+    """Validate that repository name contains only allowed safe characters and no path traversal."""
+    clean = (repo_name or "").strip()
+    if not clean or clean in (".", "..") or "/" in clean or "\\" in clean:
+        raise ValueError(f"Invalid repository name: {repo_name}")
+    if not GITHUB_REPO_REGEX.match(clean):
+        raise ValueError(f"Invalid repository name: {repo_name}")
     return clean
 
 
@@ -162,17 +173,24 @@ def get_repo_languages(
     Fetch byte breakdown of programming languages for a specific repository.
     Returns empty dict on failure with a log message (does not silently swallow all errors).
     """
-    url = f"{GITHUB_API_BASE}/repos/{owner}/{repo_name}/languages"
+    try:
+        clean_owner = validate_github_username(owner)
+        clean_repo = validate_repo_name(repo_name)
+    except ValueError as e:
+        logger.warning("Invalid owner or repository name for languages fetch: %s", e)
+        return {}
+
+    url = f"{GITHUB_API_BASE}/repos/{clean_owner}/{clean_repo}/languages"
     try:
         response = _session.get(url, headers=_get_headers(token), timeout=8)
         if response.status_code == 200:
             return response.json()
         elif response.status_code == 403:
-            logger.warning("Rate limit hit while fetching languages for %s/%s", owner, repo_name)
+            logger.warning("Rate limit hit while fetching languages for %s/%s", clean_owner, clean_repo)
         elif response.status_code != 404:
-            logger.warning("Unexpected status %d for languages of %s/%s", response.status_code, owner, repo_name)
+            logger.warning("Unexpected status %d for languages of %s/%s", response.status_code, clean_owner, clean_repo)
     except requests.RequestException as e:
-        logger.warning("Network error fetching languages for %s/%s: %s", owner, repo_name, e)
+        logger.warning("Network error fetching languages for %s/%s: %s", clean_owner, clean_repo, e)
     return {}
 
 
@@ -185,7 +203,14 @@ def get_repo_readme_preview(
     """
     Fetch and decode the raw README content of a repository if present.
     """
-    url = f"{GITHUB_API_BASE}/repos/{owner}/{repo_name}/readme"
+    try:
+        clean_owner = validate_github_username(owner)
+        clean_repo = validate_repo_name(repo_name)
+    except ValueError as e:
+        logger.warning("Invalid owner or repository name for README fetch: %s", e)
+        return None
+
+    url = f"{GITHUB_API_BASE}/repos/{clean_owner}/{clean_repo}/readme"
     headers = _get_headers(token)
     headers["Accept"] = "application/vnd.github.v3.raw"
 
@@ -195,7 +220,7 @@ def get_repo_readme_preview(
             content = response.text
             return content[:max_length] if len(content) > max_length else content
     except requests.RequestException as e:
-        logger.warning("Could not fetch README for %s/%s: %s", owner, repo_name, e)
+        logger.warning("Could not fetch README for %s/%s: %s", clean_owner, clean_repo, e)
     return None
 
 

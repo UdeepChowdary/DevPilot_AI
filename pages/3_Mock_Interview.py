@@ -604,7 +604,9 @@ else:
         # Display Evaluation if already evaluated for this question
         curr_eval = next((e for e in st.session_state["interview_evaluations"] if e["question_id"] == curr_q["id"]), None)
         if curr_eval:
-            eng_tag = curr_eval.get("ai_engine", "AI Evaluator")
+            eng_tag = html.escape(str(curr_eval.get("ai_engine", "AI Evaluator")))
+            score_esc = html.escape(str(curr_eval.get('overall_score', 0)))
+            verdict_esc = html.escape(str(curr_eval.get('verdict', '')))
             st.markdown(f"""
 <div class="feedback-card">
     <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1rem; flex-wrap:wrap; gap:0.5rem;">
@@ -613,7 +615,7 @@ else:
             <span style="font-size:0.75rem; background:rgba(99,102,241,0.18); border:1px solid rgba(99,102,241,0.4); color:#a5b4fc; padding:2px 8px; border-radius:12px; margin-left:8px; font-weight:600;">{eng_tag}</span>
         </div>
         <span class="stat-pill" style="border-color:#6366f1; color:#818cf8; font-weight:800; font-size:1rem;">
-            {curr_eval['overall_score']} / 100 ({curr_eval['verdict']})
+            {score_esc} / 100 ({verdict_esc})
         </span>
     </div>
 </div>

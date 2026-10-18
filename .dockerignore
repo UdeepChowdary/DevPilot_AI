@@ -1,0 +1,42 @@
+# Version control
+.git
+.gitignore
+
+# Environment variables & secrets
+.env
+.env.*
+*.env
+.streamlit/secrets.toml
+*secrets*.toml
+
+# Firebase credentials and keys
+serviceAccountKey.json
+*serviceAccount*.json
+*service-account*.json
+firebase-credentials.json
+
+# Local user session caches & artifacts
+.devpilot_session*
+*.sqlite3
+*.db
+
+# Python bytecode & caching
+__pycache__/
+*.py[cod]
+*$py.class
+*.pyc
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Virtual environments
+venv/
+.venv/
+env/
+ENV/
+
+# IDE & OS files
+.idea/
+.vscode/
+.DS_Store
+Thumbs.db

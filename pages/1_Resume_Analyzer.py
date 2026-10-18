@@ -13,7 +13,7 @@ import html
 # Ensure utils is importable from the pages/ directory
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
-from utils.resume_parser import extract_text, detect_sections, extract_bullet_points
+from utils.resume_parser import extract_text, detect_sections, extract_bullet_points, MAX_RESUME_SIZE
 from utils.ats_scorer import score_resume
 from utils.keyword_extractor import extract_keywords, compare_keywords
 from utils.bullet_enhancer import enhance_bullets
@@ -330,9 +330,9 @@ if uploaded_file is None and "resume_results" not in st.session_state:
 if analyze_clicked or "resume_results" in st.session_state:
 
     if analyze_clicked:
-        # File size defense (5 MB ceiling)
-        if uploaded_file.size > 5 * 1024 * 1024:
-            st.error("File size exceeds 5 MB limit. Please upload a smaller document.")
+        # File size defense (10 MB ceiling)
+        if uploaded_file.size > MAX_RESUME_SIZE:
+            st.error(f"File size exceeds the maximum limit of {MAX_RESUME_SIZE // (1024 * 1024)} MB. Please upload a smaller document.")
             st.stop()
 
         # Staged progress messages for better UX
@@ -473,7 +473,7 @@ if analyze_clicked or "resume_results" in st.session_state:
 
             st.markdown(
                 f"<div style='text-align:center; margin-bottom:0.5rem;'>"
-                f"<span class='score-verdict' style='color:{verdict_color}; background:{verdict_bg}; border-color:{verdict_border};'>{verdict_label}</span>"
+                f"<span class='score-verdict' style='color:{verdict_color}; background:{verdict_bg}; border-color:{verdict_border};'>{html.escape(verdict_label)}</span>"
                 f"</div>",
                 unsafe_allow_html=True,
             )
@@ -516,11 +516,11 @@ if analyze_clicked or "resume_results" in st.session_state:
             with col_s:
                 st.markdown("#### Strengths")
                 for s in ats["strengths"]:
-                    st.markdown(f"<div class='strength-item'>✓ {s}</div>", unsafe_allow_html=True)
+                    st.markdown(f"<div class='strength-item'>✓ {html.escape(str(s))}</div>", unsafe_allow_html=True)
             with col_w:
                 st.markdown("#### ⚠️ Areas to Improve")
                 for w in ats["weaknesses"]:
-                    st.markdown(f"<div class='weakness-item'>✗ {w}</div>", unsafe_allow_html=True)
+                    st.markdown(f"<div class='weakness-item'>✗ {html.escape(str(w))}</div>", unsafe_allow_html=True)
 
         st.markdown("<div class='gradient-divider'></div>", unsafe_allow_html=True)
         st.markdown("#### Score Component Breakdown")

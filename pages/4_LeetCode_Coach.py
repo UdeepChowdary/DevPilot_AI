@@ -291,11 +291,13 @@ if st.session_state.get("lc_stats") and st.session_state.get("leetcode_audit"):
     col_prof, col_gauge = st.columns([2, 1.2], gap="large")
 
     with col_prof:
+        u_esc = html.escape(str(stats.get('username', '')))
+        u_url_esc = html.escape(f"https://leetcode.com/{stats.get('username', '')}")
         st.markdown(f"""
 <div style="background:#161b22; border:1px solid #30363d; border-radius:14px; padding:1.5rem; margin-bottom:1rem;">
     <div style="font-size:1.5rem; font-weight:800; color:#f8fafc; margin-bottom:0.3rem;">
-        @{stats['username']}
-        <a href="https://leetcode.com/{stats['username']}" target="_blank" style="color:#f59e0b; font-size:1rem; text-decoration:none;">↗</a>
+        @{u_esc}
+        <a href="{u_url_esc}" target="_blank" style="color:#f59e0b; font-size:1rem; text-decoration:none;">↗</a>
     </div>
     <div style="margin-bottom:0.8rem;">
         <span class="stat-pill" style="border-color:#f59e0b; color:#f59e0b; font-weight:700;">Global Rank: #{stats.get('ranking', 0):,}</span>
@@ -407,7 +409,7 @@ if st.session_state.get("lc_stats") and st.session_state.get("leetcode_audit"):
             for b in audit.get("blind_spots", []):
                 st.markdown(f"""
 <div style="background:linear-gradient(145deg, rgba(239,68,68,0.08), #131726); border:1px solid rgba(239,68,68,0.32); border-radius:10px; padding:0.9rem 1.1rem; margin-bottom:0.75rem;">
-    <span style="color:#f87171; font-weight:700;">⚠️ {b}</span>
+    <span style="color:#f87171; font-weight:700;">⚠️ {html.escape(str(b))}</span>
 </div>
 """, unsafe_allow_html=True)
 
@@ -415,10 +417,12 @@ if st.session_state.get("lc_stats") and st.session_state.get("leetcode_audit"):
             st.markdown("#### Solved Counts by Pillar:")
             for item in audit.get("radar_data", []):
                 p_col = "#22c55e" if item["count"] >= 20 else "#f59e0b" if item["count"] >= 8 else "#ef4444"
+                p_name_esc = html.escape(str(item.get('pillar', '')))
+                p_cnt_esc = html.escape(str(item.get('count', 0)))
                 st.markdown(f"""
 <div style="display:flex; justify-content:space-between; align-items:center; padding:0.4rem 0; border-bottom:1px solid #1e293b;">
-    <span style="color:#e2e8f0; font-size:0.9rem;">{item['pillar']}</span>
-    <span style="color:{p_col}; font-weight:700;">{item['count']} solved</span>
+    <span style="color:#e2e8f0; font-size:0.9rem;">{p_name_esc}</span>
+    <span style="color:{p_col}; font-weight:700;">{p_cnt_esc} solved</span>
 </div>
 """, unsafe_allow_html=True)
 

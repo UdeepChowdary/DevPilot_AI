@@ -4,6 +4,7 @@ Call render_sidebar() at the top of every page to ensure consistent navigation,
 branding, and session-state score display across all Streamlit pages.
 """
 
+from typing import Any, Optional
 import streamlit as st
 
 
@@ -154,6 +155,17 @@ div[data-testid="stSidebar"] a[data-testid="stPageLink-NavLink"]:hover {
 """
 
 
+def _safe_score(val: Any) -> Optional[float | int]:
+    """Ensure score values are strictly numeric (int/float) before rendering in HTML."""
+    if val is None or isinstance(val, bool):
+        return None
+    try:
+        num = float(val)
+        return int(num) if num.is_integer() else round(num, 1)
+    except (ValueError, TypeError):
+        return None
+
+
 def render_sidebar() -> None:
     """
     Render the shared DevPilot AI sidebar with navigation, scores, and footer.
@@ -203,13 +215,13 @@ def render_sidebar() -> None:
 
         # ── Session Scores ────────────────────────────────────────────────
         resume_res = st.session_state.get("resume_results") or {}
-        resume_score = (resume_res.get("ats") or {}).get("total")
-        github_score = (st.session_state.get("github_audit") or {}).get("total_score")
-        interview_score = (st.session_state.get("interview_session") or {}).get("total_score")
-        leetcode_score = (st.session_state.get("leetcode_audit") or {}).get("total_score")
-        placement_score = (st.session_state.get("placement_readiness") or {}).get("composite_score")
+        resume_score = _safe_score((resume_res.get("ats") or {}).get("total"))
+        github_score = _safe_score((st.session_state.get("github_audit") or {}).get("total_score"))
+        interview_score = _safe_score((st.session_state.get("interview_session") or {}).get("total_score"))
+        leetcode_score = _safe_score((st.session_state.get("leetcode_audit") or {}).get("total_score"))
+        placement_score = _safe_score((st.session_state.get("placement_readiness") or {}).get("composite_score"))
 
-        if resume_score is not None or github_score is not None or interview_score is not None or leetcode_score is not None or placement_score is not None:
+        if any(s is not None for s in (resume_score, github_score, interview_score, leetcode_score, placement_score)):
             st.markdown("**Your Scores**")
 
             if placement_score is not None:
@@ -277,4 +289,3 @@ def render_sidebar() -> None:
        style="color:#6366f1; text-decoration:none;">⭐ Star on GitHub</a>
 </div>
 """, unsafe_allow_html=True)
-

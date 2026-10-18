@@ -442,13 +442,16 @@ if "gh_data" in st.session_state and "gh_audit" in st.session_state:
             st.caption("Ranked checklist to rapidly increase your developer portfolio score.")
             for i, act in enumerate(audit["action_checklist"], 1):
                 card_class = "checklist-card-high" if act["impact"] == "High" else "checklist-card"
+                task_esc = html.escape(str(act.get('task', '')))
+                impact_esc = html.escape(str(act.get('impact', '')))
+                effort_esc = html.escape(str(act.get('effort', '')))
                 st.markdown(f"""
 <div class="{card_class}">
     <div style="display: flex; justify-content: space-between; align-items: center;">
-        <span style="font-weight: 700; color: #f0f6fc;">{i}. {act['task']}</span>
+        <span style="font-weight: 700; color: #f0f6fc;">{i}. {task_esc}</span>
         <span>
-            <span class="stat-pill" style="color:#f59e0b; border-color:#f59e0b;">{act['impact']} Impact</span>
-            <span class="stat-pill">⏱️ {act['effort']}</span>
+            <span class="stat-pill" style="color:#f59e0b; border-color:#f59e0b;">{impact_esc} Impact</span>
+            <span class="stat-pill">⏱️ {effort_esc}</span>
         </span>
     </div>
 </div>
@@ -496,9 +499,9 @@ if "gh_data" in st.session_state and "gh_audit" in st.session_state:
                 for key, d in dims.items():
                     st.markdown(f"**{d['label']} ({d['score']}/{d['max']})**")
                     for s in d.get("strengths", []):
-                        st.markdown(f"<span style='color:#22c55e;'>✔ {s}</span>", unsafe_allow_html=True)
+                        st.markdown(f"<span style='color:#22c55e;'>✔ {html.escape(str(s))}</span>", unsafe_allow_html=True)
                     for imp in d.get("improvements", []):
-                        st.markdown(f"<span style='color:#f87171;'>• {imp}</span>", unsafe_allow_html=True)
+                        st.markdown(f"<span style='color:#f87171;'>• {html.escape(str(imp))}</span>", unsafe_allow_html=True)
                     st.markdown("---")
 
     # ──────────────────────────────────────────────────────────────────────────
