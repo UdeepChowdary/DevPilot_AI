@@ -500,29 +500,32 @@ else:
 
         # Microphone input using native Streamlit audio_input
         audio_val = st.audio_input("🎤 Record your spoken answer (optional)", key=f"audio_q_{curr_q['id']}")
-        
+
         # Audio transcription button if Gemini key available
         if audio_val is not None:
             ai_key = get_active_gemini_key()
-            if ai_key and st.button("Transcribe Audio to Text with Gemini AI", key=f"transcribe_btn_{curr_q['id']}"):
-                with st.spinner("Transcribing spoken audio..."):
-                    try:
-                        from google.genai import types
-                        from utils.gemini_client import _get_client
-                        sdk_type, client = _get_client(ai_key)
-                        if sdk_type == "new":
-                            audio_bytes = audio_val.read()
-                            part = types.Part.from_bytes(data=audio_bytes, mime_type="audio/wav")
-                            resp = client.models.generate_content(
-                                model="gemini-2.0-flash",
-                                contents=["Please transcribe this candidate's spoken interview answer accurately into English text. Return only the transcription without commentary.", part]
-                            )
-                            if resp.text:
-                                saved_text = resp.text.strip()
-                                st.session_state["candidate_answers"][curr_q['id']] = saved_text
-                                st.success("Audio transcribed successfully!")
-                    except Exception as e:
-                        st.warning(f"Audio transcription note: {e}. You can type or edit your answer directly below.")
+            if ai_key:
+                if st.button("Transcribe Audio to Text with Gemini AI", key=f"transcribe_btn_{curr_q['id']}"):
+                    with st.spinner("Transcribing spoken audio..."):
+                        try:
+                            from google.genai import types
+                            from utils.gemini_client import _get_client
+                            sdk_type, client = _get_client(ai_key)
+                            if sdk_type == "new":
+                                audio_bytes = audio_val.getvalue()
+                                part = types.Part.from_bytes(data=audio_bytes, mime_type="audio/wav")
+                                resp = client.models.generate_content(
+                                    model="gemini-2.0-flash",
+                                    contents=["Please transcribe this candidate's spoken interview answer accurately into English text. Return only the transcription without commentary.", part]
+                                )
+                                if resp.text:
+                                    saved_text = resp.text.strip()
+                                    st.session_state["candidate_answers"][curr_q['id']] = saved_text
+                                    st.success("Audio transcribed successfully!")
+                        except Exception as e:
+                            st.warning(f"Audio transcription note: {e}. You can type or edit your answer directly below.")
+            else:
+                st.caption("💡 Add a Gemini API key to enable auto-transcription. Your audio will still be submitted as-is.")
 
         candidate_text = st.text_area(
             "Type or edit your response:",
@@ -565,6 +568,34 @@ else:
 
         # Handle Answer Submission & Evaluation
         if eval_clicked:
+            # If audio is recorded but no text typed, auto-transcribe or use placeholder
+            if not candidate_text.strip() and audio_val is not None:
+                ai_key = get_active_gemini_key()
+                if ai_key:
+                    with st.spinner("Auto-transcribing your audio before evaluation..."):
+                        try:
+                            from google.genai import types
+                            from utils.gemini_client import _get_client
+                            sdk_type, client = _get_client(ai_key)
+                            if sdk_type == "new":
+                                audio_bytes = audio_val.getvalue()
+                                part = types.Part.from_bytes(data=audio_bytes, mime_type="audio/wav")
+                                resp = client.models.generate_content(
+                                    model="gemini-2.0-flash",
+                                    contents=["Please transcribe this candidate's spoken interview answer accurately into English text. Return only the transcription without commentary.", part]
+                                )
+                                if resp.text:
+                                    candidate_text = resp.text.strip()
+                                    st.session_state["candidate_answers"][curr_q['id']] = candidate_text
+                                    st.success("Audio auto-transcribed!")
+                        except Exception as e:
+                            candidate_text = "[Audio response recorded — transcription unavailable]"
+                            st.session_state["candidate_answers"][curr_q['id']] = candidate_text
+                            st.caption(f"Transcription note: {e}")
+                else:
+                    candidate_text = "[Audio response recorded — no Gemini key for transcription]"
+                    st.session_state["candidate_answers"][curr_q['id']] = candidate_text
+
             if not candidate_text.strip():
                 st.warning("Please type or record a response before submitting.")
             else:
