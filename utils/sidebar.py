@@ -6,6 +6,15 @@ branding, and session-state score display across all Streamlit pages.
 
 from typing import Any, Optional
 import streamlit as st
+import os, base64
+
+
+def _logo_b64() -> str:
+    logo_path = os.path.join(os.path.dirname(__file__), "..", "assets", "logo.png")
+    with open(logo_path, "rb") as f:
+        return base64.b64encode(f.read()).decode()
+
+_LOGO_URI = f"data:image/png;base64,{_logo_b64()}"
 
 
 SIDEBAR_CSS = """
@@ -179,9 +188,11 @@ def render_sidebar() -> None:
 
     with st.sidebar:
         # ── Logo / Branding ────────────────────────────────────────────────
-        st.markdown("""
+        st.markdown(f"""
 <div style="text-align:center; padding: 0.5rem 0 1.2rem 0;">
-    <div class="sidebar-logo-name">DevPilot AI</div>
+    <img src="{_LOGO_URI}" alt="DevPilot AI"
+         style="height:56px; margin-bottom:0.35rem; display:inline-block;
+                filter: drop-shadow(0 0 12px rgba(168,85,247,0.5));" />
     <div class="sidebar-logo-sub">ENGINEERING DASHBOARD</div>
 </div>
 """, unsafe_allow_html=True)

@@ -1,7 +1,15 @@
 import streamlit as st
-import sys, os
+import sys, os, base64
 sys.path.insert(0, os.path.dirname(__file__))
 from utils.sidebar import render_sidebar
+
+# ── Logo helper ───────────────────────────────────────────────────────────────
+def _logo_b64() -> str:
+    logo_path = os.path.join(os.path.dirname(__file__), "assets", "logo.png")
+    with open(logo_path, "rb") as f:
+        return base64.b64encode(f.read()).decode()
+
+_LOGO_URI = f"data:image/png;base64,{_logo_b64()}"
 
 st.set_page_config(
     page_title="DevPilot AI — Engineering Dashboard",
@@ -235,9 +243,9 @@ render_sidebar()
 
 
 # ── Hero ──────────────────────────────────────────────────────────────────────
-st.markdown("""
+st.markdown(f"""
 <div class="hero-main">
-    <h1>DevPilot AI</h1>
+    <img src="{_LOGO_URI}" alt="DevPilot AI" style="height:72px; margin-bottom:1rem; display:block; filter: drop-shadow(0 0 18px rgba(168,85,247,0.45));" />
     <div class="hero-accent"></div>
     <p class="tagline">Your Personal Software Engineering Placement & Interview Dashboard. Powered by ML text analytics and AI intelligence to accelerate your career readiness.</p>
     <div class="hero-stats">
